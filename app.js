@@ -1,118 +1,280 @@
 // ============================================
-// DESIGN MASTERCLASS — FIGMA DESIGN SYSTEM
+// DESIGN MASTERCLASS — Liquid Glass Prompts
+// Firebase Firestore real-time + Apple design
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
-  const textarea = document.getElementById('prompt-input');
-  const charCount = document.getElementById('char-count');
-  const charCounter = document.getElementById('char-counter');
-  const submitBtn = document.getElementById('submit-btn');
-  const successOverlay = document.getElementById('success-overlay');
+// --- Firebase Init (compat SDK) ---
+const firebaseConfig = {
+  apiKey: "AIzaSyALsGTWeB1MUfkXQOsHuA4E2wVOh9tZ_iI",
+  authDomain: "foundfounded-7cd3e.firebaseapp.com",
+  projectId: "foundfounded-7cd3e",
+  storageBucket: "foundfounded-7cd3e.firebasestorage.app",
+  messagingSenderId: "705068371976",
+  appId: "1:705068371976:web:546b664ff9b87d99eac1bd",
+  measurementId: "G-G0DR5QJZY0"
+};
 
-  // --- Character Counter ---
-  textarea.addEventListener('input', () => {
-    const len = textarea.value.length;
-    charCount.textContent = len.toLocaleString();
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
+const db = firebase.firestore();
 
-    if (len > 1800) {
-      charCounter.classList.add('near-limit');
-    } else {
-      charCounter.classList.remove('near-limit');
+// --- DOM ---
+const canvas = document.getElementById('canvas');
+const listView = document.getElementById('list-view');
+const listContent = document.getElementById('list-content');
+const textarea = document.getElementById('prompt-input');
+const authorInput = document.getElementById('author-input');
+const submitBtn = document.getElementById('submit-btn');
+const navFloat = document.getElementById('nav-float');
+const navList = document.getElementById('nav-list');
+const filterNewest = document.getElementById('filter-newest');
+const filterOldest = document.getElementById('filter-oldest');
+
+// --- State ---
+let prompts = [];
+let currentView = 'float';
+let sortOrder = 'newest';
+
+// Restore author from localStorage
+const saved = localStorage.getItem('mc_author') || '';
+if (saved) authorInput.value = saved;
+
+// --- Helpers ---
+function rand(a, b) { return Math.random() * (b - a) + a; }
+function escHtml(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function fmtTime(ts) {
+  const diff = Math.floor((Date.now() - ts) / 60000);
+  if (diff < 1) return '방금 전';
+  if (diff < 60) return diff + '분 전';
+  const h = Math.floor(diff / 60);
+  if (h < 24) return h + '시간 전';
+  const d = new Date(ts);
+  return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+// --- Positioning ---
+let placed = [];
+
+function findPos(cw, ch, bw, bh) {
+  const pad = 14;
+  for (let i = 0; i < 50; i++) {
+    const x = rand(pad, Math.max(cw - bw - pad, pad + 10));
+    const y = rand(pad, Math.max(ch - bh - pad, pad + 10));
+    let ok = true;
+    for (const r of placed) {
+      if (x < r.x+r.w+6 && x+bw+6 > r.x && y < r.y+r.h+6 && y+bh+6 > r.y) { ok = false; break; }
     }
+    if (ok) return {x, y};
+  }
+  return { x: rand(14, Math.max(cw-bw-14, 24)), y: rand(14, Math.max(ch-bh-14, 24)) };
+}
+
+// --- Bubble ---
+function mkBubble(p, x, y, enter) {
+  const el = document.createElement('div');
+  el.className = 'bubble' + (enter ? ' bubble--enter' : '');
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  const dr = 16;
+  el.style.setProperty('--d-dur', rand(18,30)+'s');
+  el.style.setProperty('--d-del', rand(0,6)+'s');
+  el.style.setProperty('--dx1', rand(-dr,dr)+'px');
+  el.style.setProperty('--dy1', rand(-dr,dr)+'px');
+  el.style.setProperty('--dx2', rand(-dr,dr)+'px');
+  el.style.setProperty('--dy2', rand(-dr,dr)+'px');
+  el.style.setProperty('--dx3', rand(-dr,dr)+'px');
+  el.style.setProperty('--dy3', rand(-dr,dr)+'px');
+  const a = p.author ? escHtml(p.author) : '';
+  el.innerHTML =
+    '<button class="delete-btn" data-id="' + p.id + '" aria-label="삭제">&times;</button>' +
+    (a ? '<p class="bubble__author">' + a + '</p>' : '') +
+    '<p class="bubble__text">' + escHtml(p.text) + '</p>';
+  el.querySelector('.delete-btn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    deletePrompt(p.id, el);
   });
+  if (enter) el.addEventListener('animationend', () => el.classList.remove('bubble--enter'), {once:true});
+  return el;
+}
 
-  // --- Auto-resize textarea to fill available space ---
-  function adjustTextareaHeight() {
-    const vh = window.innerHeight;
-    const header = document.getElementById('header');
-    const footer = document.getElementById('footer');
-    const label = document.querySelector('.caption');
-    const subhead = document.querySelector('.subhead');
-    const counter = document.querySelector('.char-counter');
+// --- Render Floating ---
+function renderFloat() {
+  const bg = canvas.querySelector('.canvas__bg');
+  canvas.innerHTML = '';
+  if (bg) canvas.appendChild(bg);
+  placed = [];
 
-    if (!header || !footer) return;
-
-    const headerH = header.offsetHeight;
-    const footerH = footer.offsetHeight;
-    const labelH = label ? label.offsetHeight + 12 : 0;
-    const subheadH = subhead ? subhead.offsetHeight + 24 : 0;
-    const counterH = counter ? counter.offsetHeight + 8 : 0;
-    const blockPadding = 96; // top + bottom xxl padding of color block
-    const extra = 24;
-
-    const available = vh - headerH - footerH - labelH - subheadH - counterH - blockPadding - extra;
-    const minH = 200;
-    textarea.style.minHeight = Math.max(available, minH) + 'px';
+  if (!prompts.length) {
+    canvas.insertAdjacentHTML('beforeend',
+      '<div class="empty-state"><p class="empty-state__text">아직 프롬프트가 없습니다.<br>아래에서 입력해 주세요.</p></div>');
+    return;
   }
 
-  adjustTextareaHeight();
-  window.addEventListener('resize', adjustTextareaHeight);
+  const r = canvas.getBoundingClientRect();
+  const show = prompts.slice(0, 25);
+  show.forEach(p => {
+    const ew = Math.min(80 + p.text.length * 4, 250);
+    const eh = 44 + Math.ceil(p.text.length / 16) * 16;
+    const pos = findPos(r.width, r.height, ew, eh);
+    placed.push({x:pos.x, y:pos.y, w:ew, h:eh});
+    canvas.appendChild(mkBubble(p, pos.x, pos.y, false));
+  });
+}
 
-  // --- Ripple effect on button ---
-  submitBtn.addEventListener('pointerdown', (e) => {
-    const rect = submitBtn.getBoundingClientRect();
-    const ripple = document.createElement('span');
-    ripple.classList.add('ripple');
-    const size = Math.max(rect.width, rect.height);
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-    ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-    submitBtn.appendChild(ripple);
-    ripple.addEventListener('animationend', () => ripple.remove());
+// --- Render List ---
+function renderList() {
+  listContent.innerHTML = '';
+  if (!prompts.length) {
+    listContent.innerHTML = '<div class="empty-state" style="position:relative;min-height:200px"><p class="empty-state__text">아직 프롬프트가 없습니다.</p></div>';
+    return;
+  }
+  const sorted = [...prompts].sort((a,b) => sortOrder === 'newest' ? b.time - a.time : a.time - b.time);
+  sorted.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'list-item';
+    item.style.animationDelay = (i * 0.03) + 's';
+    const a = p.author ? escHtml(p.author) : '—';
+    item.innerHTML =
+      '<div class="list-item__author">' + a + '</div>' +
+      '<div class="list-item__body">' +
+        '<p class="list-item__text">' + escHtml(p.text) + '</p>' +
+        '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
+      '</div>' +
+      '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
+    item.querySelector('.delete-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      deletePrompt(p.id, item);
+    });
+    listContent.appendChild(item);
+  });
+}
+
+// --- Delete Prompt ---
+function deletePrompt(id, el) {
+  // Fade out animation
+  el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+  el.style.opacity = '0';
+  el.style.transform = 'scale(0.9)';
+
+  if (id && !id.startsWith('local-')) {
+    db.collection('prompts').doc(id).delete().catch(function(e) {
+      console.warn('Delete failed:', e.message);
+    });
+    // onSnapshot will auto-update
+  } else {
+    // Local-only prompt
+    setTimeout(function() {
+      prompts = prompts.filter(function(p) { return p.id !== id; });
+      if (currentView === 'float') renderFloat();
+      if (currentView === 'list') renderList();
+    }, 250);
+  }
+}
+
+// --- Firestore Listener ---
+function startListener() {
+  try {
+    db.collection('prompts').orderBy('createdAt', 'desc')
+      .onSnapshot(function(snapshot) {
+        prompts = snapshot.docs.map(function(doc) {
+          var d = doc.data();
+          return {
+            id: doc.id,
+            text: d.text || '',
+            author: d.author || '',
+            time: d.createdAt ? d.createdAt.toMillis() : Date.now()
+          };
+        });
+        if (currentView === 'float') renderFloat();
+        if (currentView === 'list') renderList();
+      }, function(err) {
+        console.warn('Firestore listener error:', err.message);
+      });
+  } catch(e) {
+    console.warn('Firestore init error:', e.message);
+  }
+}
+
+// --- Submit ---
+function submitPrompt() {
+  var text = textarea.value.trim();
+  if (!text) return;
+  var author = authorInput.value.trim().toUpperCase().slice(0, 3) || '';
+  if (author) localStorage.setItem('mc_author', author);
+
+  db.collection('prompts').add({
+    text: text,
+    author: author,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e) {
+    console.warn('Write failed, adding locally:', e.message);
+    prompts.unshift({ id: 'local-' + Date.now(), text: text, author: author, time: Date.now() });
+    if (currentView === 'float') renderFloat();
+    if (currentView === 'list') renderList();
   });
 
-  // --- Submit handler ---
-  submitBtn.addEventListener('click', () => {
-    const prompt = textarea.value.trim();
+  textarea.value = '';
+  textarea.style.height = 'auto';
+  submitBtn.disabled = true;
+  textarea.focus();
+}
 
-    if (!prompt) {
-      // Shake animation for empty submit
-      textarea.style.animation = 'none';
-      textarea.offsetHeight; // trigger reflow
-      textarea.style.animation = 'shake 0.4s ease';
-      textarea.focus();
+// --- View Toggle ---
+function setView(v) {
+  if (v === currentView) return;
+  currentView = v;
+  navFloat.classList.toggle('is-active', v === 'float');
+  navList.classList.toggle('is-active', v === 'list');
+  if (v === 'float') {
+    canvas.classList.remove('hidden');
+    listView.classList.add('hidden');
+    renderFloat();
+  } else {
+    canvas.classList.add('hidden');
+    listView.classList.remove('hidden');
+    renderList();
+  }
+}
 
-      // Temporary border emphasis
-      textarea.style.borderColor = '#000000';
-      setTimeout(() => {
-        textarea.style.borderColor = '';
-        textarea.style.animation = '';
-      }, 1200);
-      return;
-    }
+// --- Events ---
+navFloat.addEventListener('click', function() { setView('float'); });
+navList.addEventListener('click', function() { setView('list'); });
 
-    // Show loading state
-    submitBtn.classList.add('loading');
-    submitBtn.querySelector('.btn-text').textContent = '전송 중…';
-
-    // Simulate sending (replace with actual API call)
-    setTimeout(() => {
-      submitBtn.classList.remove('loading');
-      submitBtn.querySelector('.btn-text').textContent = '프롬프트 전송하기';
-
-      // Show success overlay
-      successOverlay.classList.add('visible');
-      successOverlay.setAttribute('aria-hidden', 'false');
-
-      // Auto-hide after 2.5 seconds
-      setTimeout(() => {
-        successOverlay.classList.remove('visible');
-        successOverlay.setAttribute('aria-hidden', 'true');
-        textarea.value = '';
-        charCount.textContent = '0';
-        charCounter.classList.remove('near-limit');
-        textarea.focus();
-      }, 2500);
-    }, 1200);
-  });
-
-  // --- Dismiss success overlay on tap ---
-  successOverlay.addEventListener('click', () => {
-    successOverlay.classList.remove('visible');
-    successOverlay.setAttribute('aria-hidden', 'true');
-    textarea.value = '';
-    charCount.textContent = '0';
-    charCounter.classList.remove('near-limit');
-    textarea.focus();
-  });
+filterNewest.addEventListener('click', function() {
+  sortOrder = 'newest';
+  filterNewest.classList.add('is-active');
+  filterOldest.classList.remove('is-active');
+  renderList();
 });
+filterOldest.addEventListener('click', function() {
+  sortOrder = 'oldest';
+  filterOldest.classList.add('is-active');
+  filterNewest.classList.remove('is-active');
+  renderList();
+});
+
+textarea.addEventListener('input', function() {
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+  submitBtn.disabled = textarea.value.trim().length === 0;
+});
+
+submitBtn.addEventListener('click', submitPrompt);
+
+textarea.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (textarea.value.trim()) submitPrompt();
+  }
+});
+
+// --- 1-hour auto-refresh of floating positions ---
+setInterval(function() {
+  if (currentView === 'float') renderFloat();
+}, 3600000);
+
+// --- Init ---
+startListener();
+renderFloat();
