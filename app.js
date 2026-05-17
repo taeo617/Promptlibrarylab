@@ -21,12 +21,14 @@ const db = firebase.firestore();
 // --- DOM ---
 const canvas = document.getElementById('canvas');
 const listView = document.getElementById('list-view');
+const libraryView = document.getElementById('library-view');
 const listContent = document.getElementById('list-content');
 const textarea = document.getElementById('prompt-input');
 const authorInput = document.getElementById('author-input');
 const submitBtn = document.getElementById('submit-btn');
 const navFloat = document.getElementById('nav-float');
 const navList = document.getElementById('nav-list');
+const navLibrary = document.getElementById('nav-library');
 const filterNewest = document.getElementById('filter-newest');
 const filterOldest = document.getElementById('filter-oldest');
 
@@ -50,8 +52,8 @@ function fmtTime(ts) {
   const h = Math.floor(diff / 60);
   if (h < 24) return h + '시간 전';
   const d = new Date(ts);
-  return (d.getMonth()+1) + '/' + d.getDate() + ' ' +
-    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+    String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 }
 
 // --- Positioning ---
@@ -64,11 +66,11 @@ function findPos(cw, ch, bw, bh) {
     const y = rand(pad, Math.max(ch - bh - pad, pad + 10));
     let ok = true;
     for (const r of placed) {
-      if (x < r.x+r.w+6 && x+bw+6 > r.x && y < r.y+r.h+6 && y+bh+6 > r.y) { ok = false; break; }
+      if (x < r.x + r.w + 6 && x + bw + 6 > r.x && y < r.y + r.h + 6 && y + bh + 6 > r.y) { ok = false; break; }
     }
-    if (ok) return {x, y};
+    if (ok) return { x, y };
   }
-  return { x: rand(14, Math.max(cw-bw-14, 24)), y: rand(14, Math.max(ch-bh-14, 24)) };
+  return { x: rand(14, Math.max(cw - bw - 14, 24)), y: rand(14, Math.max(ch - bh - 14, 24)) };
 }
 
 // --- Bubble ---
@@ -78,24 +80,61 @@ function mkBubble(p, x, y, enter) {
   el.style.left = x + 'px';
   el.style.top = y + 'px';
   const dr = 16;
-  el.style.setProperty('--d-dur', rand(18,30)+'s');
-  el.style.setProperty('--d-del', rand(0,6)+'s');
-  el.style.setProperty('--dx1', rand(-dr,dr)+'px');
-  el.style.setProperty('--dy1', rand(-dr,dr)+'px');
-  el.style.setProperty('--dx2', rand(-dr,dr)+'px');
-  el.style.setProperty('--dy2', rand(-dr,dr)+'px');
-  el.style.setProperty('--dx3', rand(-dr,dr)+'px');
-  el.style.setProperty('--dy3', rand(-dr,dr)+'px');
+  el.style.setProperty('--d-dur', rand(18, 30) + 's');
+  el.style.setProperty('--d-del', rand(0, 6) + 's');
+  el.style.setProperty('--dx1', rand(-dr, dr) + 'px');
+  el.style.setProperty('--dy1', rand(-dr, dr) + 'px');
+  el.style.setProperty('--dx2', rand(-dr, dr) + 'px');
+  el.style.setProperty('--dy2', rand(-dr, dr) + 'px');
+  el.style.setProperty('--dx3', rand(-dr, dr) + 'px');
+  el.style.setProperty('--dy3', rand(-dr, dr) + 'px');
   const a = p.author ? escHtml(p.author) : '';
   el.innerHTML =
     '<button class="delete-btn" data-id="' + p.id + '" aria-label="삭제">&times;</button>' +
     (a ? '<p class="bubble__author">' + a + '</p>' : '') +
     '<p class="bubble__text">' + escHtml(p.text) + '</p>';
-  el.querySelector('.delete-btn').addEventListener('click', function(e) {
+  el.querySelector('.delete-btn').addEventListener('click', function (e) {
     e.stopPropagation();
     deletePrompt(p.id, el);
   });
-  if (enter) el.addEventListener('animationend', () => el.classList.remove('bubble--enter'), {once:true});
+
+  let isDragging = false;
+  let startX, startY, initialLeft, initialTop;
+
+  el.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('.delete-btn')) return;
+    isDragging = true;
+    el.classList.add('is-dragging');
+    startX = e.clientX;
+    startY = e.clientY;
+    initialLeft = parseFloat(el.style.left) || 0;
+    initialTop = parseFloat(el.style.top) || 0;
+    el.setPointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointermove', function (e) {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    el.style.left = (initialLeft + dx) + 'px';
+    el.style.top = (initialTop + dy) + 'px';
+  });
+
+  el.addEventListener('pointerup', function (e) {
+    if (!isDragging) return;
+    isDragging = false;
+    el.classList.remove('is-dragging');
+    el.releasePointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointercancel', function (e) {
+    if (!isDragging) return;
+    isDragging = false;
+    el.classList.remove('is-dragging');
+    el.releasePointerCapture(e.pointerId);
+  });
+
+  if (enter) el.addEventListener('animationend', () => el.classList.remove('bubble--enter'), { once: true });
   return el;
 }
 
@@ -118,7 +157,7 @@ function renderFloat() {
     const ew = Math.min(80 + p.text.length * 4, 250);
     const eh = 44 + Math.ceil(p.text.length / 16) * 16;
     const pos = findPos(r.width, r.height, ew, eh);
-    placed.push({x:pos.x, y:pos.y, w:ew, h:eh});
+    placed.push({ x: pos.x, y: pos.y, w: ew, h: eh });
     canvas.appendChild(mkBubble(p, pos.x, pos.y, false));
   });
 }
@@ -130,7 +169,7 @@ function renderList() {
     listContent.innerHTML = '<div class="empty-state" style="position:relative;min-height:200px"><p class="empty-state__text">아직 프롬프트가 없습니다.</p></div>';
     return;
   }
-  const sorted = [...prompts].sort((a,b) => sortOrder === 'newest' ? b.time - a.time : a.time - b.time);
+  const sorted = [...prompts].sort((a, b) => sortOrder === 'newest' ? b.time - a.time : a.time - b.time);
   sorted.forEach((p, i) => {
     const item = document.createElement('div');
     item.className = 'list-item';
@@ -139,11 +178,11 @@ function renderList() {
     item.innerHTML =
       '<div class="list-item__author">' + a + '</div>' +
       '<div class="list-item__body">' +
-        '<p class="list-item__text">' + escHtml(p.text) + '</p>' +
-        '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
+      '<p class="list-item__text">' + escHtml(p.text) + '</p>' +
+      '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
       '</div>' +
       '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
-    item.querySelector('.delete-btn').addEventListener('click', function(e) {
+    item.querySelector('.delete-btn').addEventListener('click', function (e) {
       e.stopPropagation();
       deletePrompt(p.id, item);
     });
@@ -159,14 +198,14 @@ function deletePrompt(id, el) {
   el.style.transform = 'scale(0.9)';
 
   if (id && !id.startsWith('local-')) {
-    db.collection('prompts').doc(id).delete().catch(function(e) {
+    db.collection('prompts').doc(id).delete().catch(function (e) {
       console.warn('Delete failed:', e.message);
     });
     // onSnapshot will auto-update
   } else {
     // Local-only prompt
-    setTimeout(function() {
-      prompts = prompts.filter(function(p) { return p.id !== id; });
+    setTimeout(function () {
+      prompts = prompts.filter(function (p) { return p.id !== id; });
       if (currentView === 'float') renderFloat();
       if (currentView === 'list') renderList();
     }, 250);
@@ -177,8 +216,8 @@ function deletePrompt(id, el) {
 function startListener() {
   try {
     db.collection('prompts').orderBy('createdAt', 'desc')
-      .onSnapshot(function(snapshot) {
-        prompts = snapshot.docs.map(function(doc) {
+      .onSnapshot(function (snapshot) {
+        prompts = snapshot.docs.map(function (doc) {
           var d = doc.data();
           return {
             id: doc.id,
@@ -189,10 +228,10 @@ function startListener() {
         });
         if (currentView === 'float') renderFloat();
         if (currentView === 'list') renderList();
-      }, function(err) {
+      }, function (err) {
         console.warn('Firestore listener error:', err.message);
       });
-  } catch(e) {
+  } catch (e) {
     console.warn('Firestore init error:', e.message);
   }
 }
@@ -208,7 +247,7 @@ function submitPrompt() {
     text: text,
     author: author,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(function(e) {
+  }).catch(function (e) {
     console.warn('Write failed, adding locally:', e.message);
     prompts.unshift({ id: 'local-' + Date.now(), text: text, author: author, time: Date.now() });
     if (currentView === 'float') renderFloat();
@@ -227,35 +266,42 @@ function setView(v) {
   currentView = v;
   navFloat.classList.toggle('is-active', v === 'float');
   navList.classList.toggle('is-active', v === 'list');
+  navLibrary.classList.toggle('is-active', v === 'library');
+
+  canvas.classList.add('hidden');
+  listView.classList.add('hidden');
+  libraryView.classList.add('hidden');
+
   if (v === 'float') {
     canvas.classList.remove('hidden');
-    listView.classList.add('hidden');
     renderFloat();
-  } else {
-    canvas.classList.add('hidden');
+  } else if (v === 'list') {
     listView.classList.remove('hidden');
     renderList();
+  } else if (v === 'library') {
+    libraryView.classList.remove('hidden');
   }
 }
 
 // --- Events ---
-navFloat.addEventListener('click', function() { setView('float'); });
-navList.addEventListener('click', function() { setView('list'); });
+navFloat.addEventListener('click', function () { setView('float'); });
+navList.addEventListener('click', function () { setView('list'); });
+navLibrary.addEventListener('click', function () { setView('library'); });
 
-filterNewest.addEventListener('click', function() {
+filterNewest.addEventListener('click', function () {
   sortOrder = 'newest';
   filterNewest.classList.add('is-active');
   filterOldest.classList.remove('is-active');
   renderList();
 });
-filterOldest.addEventListener('click', function() {
+filterOldest.addEventListener('click', function () {
   sortOrder = 'oldest';
   filterOldest.classList.add('is-active');
   filterNewest.classList.remove('is-active');
   renderList();
 });
 
-textarea.addEventListener('input', function() {
+textarea.addEventListener('input', function () {
   textarea.style.height = 'auto';
   textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
   submitBtn.disabled = textarea.value.trim().length === 0;
@@ -263,7 +309,7 @@ textarea.addEventListener('input', function() {
 
 submitBtn.addEventListener('click', submitPrompt);
 
-textarea.addEventListener('keydown', function(e) {
+textarea.addEventListener('keydown', function (e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     if (textarea.value.trim()) submitPrompt();
@@ -271,7 +317,7 @@ textarea.addEventListener('keydown', function(e) {
 });
 
 // --- 1-hour auto-refresh of floating positions ---
-setInterval(function() {
+setInterval(function () {
   if (currentView === 'float') renderFloat();
 }, 3600000);
 
