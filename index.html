@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="description" content="인더스트리얼 디자인 마스터클래스 워크샵 - AI 프롬프트 입력 도구" />
+  <title>디자인 마스터클래스 | AI 프롬프트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@320;330;340;400;480;540;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="page" id="page">
+
+    <!-- Top bar -->
+    <header class="top-bar" id="top-bar">
+      <div class="top-bar__left">
+        <h1 class="top-bar__title">나의 디자인 디테일을 AI의 언어로</h1>
+        <p class="top-bar__eyebrow">MASTERCLASS WORKSHOP</p>
+      </div>
+      <div class="top-bar__right">
+        <div class="view-toggle" id="view-toggle" role="tablist">
+          <button class="view-toggle__tab is-active" data-view="float" role="tab" aria-selected="true" id="tab-float">둥둥</button>
+          <button class="view-toggle__tab" data-view="list" role="tab" aria-selected="false" id="tab-list">리스트</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Canvas: floating prompts -->
+    <main class="canvas" id="canvas" role="tabpanel" aria-labelledby="tab-float">
+      <!-- Floating bubbles are injected by JS -->
+    </main>
+
+    <!-- List view (hidden by default) -->
+    <section class="list-view hidden" id="list-view" role="tabpanel" aria-labelledby="tab-list">
+      <div class="list-view__inner" id="list-view-inner">
+        <!-- List items are injected by JS -->
+      </div>
+    </section>
+
+    <!-- Bottom input bar -->
+    <footer class="input-bar" id="input-bar">
+      <div class="input-bar__inner">
+        <textarea id="prompt-input" class="input-bar__textarea" placeholder="당신의 디자인을 설명해 주세요…"
+          rows="1" maxlength="500" spellcheck="false"></textarea>
+        <button type="button" class="input-bar__send" id="submit-btn" aria-label="전송">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyALsGTWeB1MUfkXQOsHuA4E2wVOh9tZ_iI",
+      authDomain: "foundfounded-7cd3e.firebaseapp.com",
+      projectId: "foundfounded-7cd3e",
+      storageBucket: "foundfounded-7cd3e.firebasestorage.app",
+      messagingSenderId: "705068371976",
+      appId: "1:705068371976:web:546b664ff9b87d99eac1bd",
+      measurementId: "G-G0DR5QJZY0"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+  </script>
+</body>
+
+</html>

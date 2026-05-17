@@ -1,0 +1,599 @@
+/* ============================================
+   DESIGN MASTERCLASS — FIGMA DESIGN SYSTEM
+   Monochrome chrome + pastel color-block rhythm
+   ============================================ */
+
+/* --- Reset & Base --- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* --- Design Tokens --- */
+:root {
+  /* Colors — Brand & Surface */
+  --colors-primary: #000000;
+  --colors-on-primary: #ffffff;
+  --colors-canvas: #ffffff;
+  --colors-ink: #000000;
+  --colors-surface-soft: #f5f5f5;
+  --colors-hairline: #e0e0e0;
+  --colors-hairline-soft: #ebebeb;
+
+  /* Colors — Block Palette */
+  --colors-block-lime: #d4f57a;
+  --colors-block-lilac: #d9ccf2;
+  --colors-block-cream: #f5edd6;
+  --colors-block-mint: #b8f0d8;
+  --colors-block-pink: #fad0e4;
+  --colors-block-coral: #f5b8a9;
+  --colors-block-navy: #1e1e3f;
+
+  /* Colors — Semantic */
+  --colors-overlay-scrim: rgba(0, 0, 0, 0.60);
+
+  /* Spacing (8px base) */
+  --spacing-hair: 1px;
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 96px;
+
+  /* Border Radius */
+  --rounded-xs: 2px;
+  --rounded-sm: 6px;
+  --rounded-md: 8px;
+  --rounded-lg: 24px;
+  --rounded-xl: 32px;
+  --rounded-pill: 50px;
+  --rounded-full: 9999px;
+
+  /* Transition */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.18s var(--ease-out);
+  --transition-normal: 0.3s var(--ease-out);
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, helvetica, sans-serif;
+  font-weight: 320;
+  background-color: var(--colors-canvas);
+  color: var(--colors-ink);
+  line-height: 1.45;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'kern' 1;
+}
+
+/* ============================================
+   TYPOGRAPHY SYSTEM
+   figmaSans → Inter | figmaMono → JetBrains Mono
+   ============================================ */
+
+.display-xl {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(42px, 10vw, 86px);
+  font-weight: 340;
+  line-height: 1.00;
+  letter-spacing: -1.72px;
+  color: var(--colors-ink);
+}
+
+.display-lg {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(36px, 8vw, 64px);
+  font-weight: 340;
+  line-height: 1.10;
+  letter-spacing: -0.96px;
+  color: var(--colors-ink);
+}
+
+.headline {
+  font-family: 'Inter', sans-serif;
+  font-size: 26px;
+  font-weight: 540;
+  line-height: 1.35;
+  letter-spacing: -0.26px;
+  color: var(--colors-ink);
+}
+
+.subhead {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 340;
+  line-height: 1.40;
+  letter-spacing: -0.14px;
+  color: var(--colors-ink);
+}
+
+.body-lg {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 330;
+  line-height: 1.40;
+  letter-spacing: -0.14px;
+  color: var(--colors-ink);
+}
+
+.body {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 320;
+  line-height: 1.45;
+  letter-spacing: -0.26px;
+  color: var(--colors-ink);
+}
+
+.body-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 330;
+  line-height: 1.45;
+  letter-spacing: -0.14px;
+  color: var(--colors-ink);
+}
+
+/* figmaMono — taxonomy labels only */
+.eyebrow {
+  font-family: 'JetBrains Mono', 'SF Mono', menlo, monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.30;
+  letter-spacing: 0.54px;
+  text-transform: uppercase;
+  color: var(--colors-ink);
+}
+
+.caption {
+  font-family: 'JetBrains Mono', 'SF Mono', menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.00;
+  letter-spacing: 0.60px;
+  text-transform: uppercase;
+  color: var(--colors-ink);
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+}
+
+/* --- Sections --- */
+.section {
+  position: relative;
+}
+
+.section--canvas {
+  background-color: var(--colors-canvas);
+}
+
+.section--footer {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-xl);
+}
+
+/* ============================================
+   COLOR-BLOCK SECTIONS — The Signature
+   ============================================ */
+
+.color-block {
+  margin-left: var(--spacing-md);
+  margin-right: var(--spacing-md);
+  border-radius: var(--rounded-lg);
+  padding-top: var(--spacing-xxl);
+  padding-bottom: var(--spacing-xxl);
+  flex: 1;
+}
+
+.color-block--lime { background-color: var(--colors-block-lime); }
+.color-block--lilac { background-color: var(--colors-block-lilac); }
+.color-block--cream { background-color: var(--colors-block-cream); }
+.color-block--mint { background-color: var(--colors-block-mint); }
+.color-block--pink { background-color: var(--colors-block-pink); }
+.color-block--coral { background-color: var(--colors-block-coral); }
+
+.color-block--navy {
+  background-color: var(--colors-block-navy);
+  color: var(--colors-on-primary);
+}
+
+.color-block .container {
+  padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.section--canvas#header {
+  padding-top: var(--spacing-xxl);
+  padding-bottom: var(--spacing-xl);
+  animation: fadeIn 0.6s var(--ease-out) both;
+}
+
+.section--canvas#header .eyebrow {
+  margin-bottom: var(--spacing-md);
+  opacity: 0.55;
+}
+
+.section--canvas#header .display-xl {
+  /* Mobile: scale down to fit */
+  font-size: clamp(36px, 9.5vw, 52px);
+  letter-spacing: -0.96px;
+}
+
+/* ============================================
+   PROMPT SECTION (inside lime block)
+   ============================================ */
+
+.prompt-section {
+  animation: fadeIn 0.6s var(--ease-out) 0.1s both;
+}
+
+.prompt-section .caption {
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.5;
+}
+
+.prompt-section .subhead {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   FORM INPUTS
+   ============================================ */
+
+.text-input {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 320;
+  line-height: 1.45;
+  letter-spacing: -0.26px;
+  color: var(--colors-ink);
+  background-color: var(--colors-canvas);
+  border: 1px solid var(--colors-hairline);
+  border-radius: var(--rounded-md);
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+
+.text-input--textarea {
+  min-height: 260px;
+  resize: none;
+  line-height: 1.65;
+}
+
+.text-input::placeholder {
+  color: var(--colors-ink);
+  opacity: 0.3;
+  font-weight: 320;
+}
+
+.text-input:focus {
+  border-color: var(--colors-ink);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+}
+
+.text-input::-webkit-scrollbar {
+  width: 3px;
+}
+
+.text-input::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.text-input::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+/* Character counter */
+.char-counter {
+  font-family: 'JetBrains Mono', monospace;
+  text-align: right;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: var(--colors-ink);
+  opacity: 0.35;
+  margin-top: var(--spacing-xs);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  transition: color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.char-counter.near-limit {
+  color: #d32f2f;
+  opacity: 0.8;
+}
+
+/* ============================================
+   BUTTONS — Pill is the only shape
+   ============================================ */
+
+/* Primary: black pill */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 480;
+  line-height: 1.40;
+  letter-spacing: -0.10px;
+  color: var(--colors-on-primary);
+  background-color: var(--colors-primary);
+  border: none;
+  border-radius: var(--rounded-pill);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  opacity: 0.75;
+}
+
+.btn-primary.loading {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.btn-primary.loading .btn-text::after {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-left: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+}
+
+/* Secondary: white pill (unused here but defined for system completeness) */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 480;
+  line-height: 1.40;
+  letter-spacing: -0.10px;
+  color: var(--colors-ink);
+  background-color: var(--colors-canvas);
+  border: none;
+  border-radius: var(--rounded-pill);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  opacity: 0.7;
+}
+
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  transition: transform var(--transition-fast);
+}
+
+.btn-primary:hover .btn-icon {
+  transform: translateX(2px);
+}
+
+/* Ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(0);
+  animation: rippleEffect 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleEffect {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   FOOTER NOTE
+   ============================================ */
+
+.footer-note {
+  text-align: center;
+  margin-top: var(--spacing-sm);
+  opacity: 0.3;
+}
+
+/* ============================================
+   SUCCESS OVERLAY
+   ============================================ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--colors-overlay-scrim);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s var(--ease-out),
+              visibility 0.35s var(--ease-out);
+}
+
+.overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.overlay-content {
+  text-align: center;
+  padding: var(--spacing-xxl);
+  transform: scale(0.95) translateY(8px);
+  transition: transform 0.4s var(--ease-out);
+}
+
+.overlay.visible .overlay-content {
+  transform: scale(1) translateY(0);
+}
+
+.overlay-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--colors-ink);
+  background-color: var(--colors-block-lime);
+  border-radius: var(--rounded-full);
+}
+
+.overlay .headline {
+  color: var(--colors-on-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.overlay .body-lg {
+  color: var(--colors-on-primary);
+  opacity: 0.6;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Taller phones — bigger textarea */
+@media (min-height: 750px) {
+  .text-input--textarea {
+    min-height: 320px;
+  }
+}
+
+@media (min-height: 850px) {
+  .section--canvas#header {
+    padding-top: var(--spacing-section);
+  }
+  .text-input--textarea {
+    min-height: 380px;
+  }
+}
+
+@media (max-height: 650px) {
+  .section--canvas#header .display-xl {
+    font-size: clamp(28px, 8vw, 40px);
+  }
+  .text-input--textarea {
+    min-height: 200px;
+  }
+  .color-block {
+    padding-top: var(--spacing-xl);
+    padding-bottom: var(--spacing-xl);
+  }
+}
+
+/* Below 768px — color block goes full bleed */
+@media (max-width: 768px) {
+  .color-block {
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0;
+  }
+}
+
+/* Safe area for notch / home indicator */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .section--footer {
+    padding-bottom: calc(var(--spacing-xl) + env(safe-area-inset-bottom));
+  }
+}
