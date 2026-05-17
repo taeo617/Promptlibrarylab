@@ -77,9 +77,10 @@ function findPos(cw, ch, bw, bh) {
 function mkBubble(p, x, y, enter) {
   const el = document.createElement('div');
   el.className = 'bubble' + (enter ? ' bubble--enter' : '');
+  el.dataset.id = p.id;
   el.style.left = x + 'px';
   el.style.top = y + 'px';
-  const dr = 16;
+  const dr = 40;
   el.style.setProperty('--d-dur', rand(18, 30) + 's');
   el.style.setProperty('--d-del', rand(0, 6) + 's');
   el.style.setProperty('--dx1', rand(-dr, dr) + 'px');
@@ -140,25 +141,51 @@ function mkBubble(p, x, y, enter) {
 
 // --- Render Floating ---
 function renderFloat() {
-  const bg = canvas.querySelector('.canvas__bg');
-  canvas.innerHTML = '';
-  if (bg) canvas.appendChild(bg);
-  placed = [];
+  const existingBubbles = Array.from(canvas.querySelectorAll('.bubble'));
+  const emptyState = canvas.querySelector('.empty-state');
 
   if (!prompts.length) {
-    canvas.insertAdjacentHTML('beforeend',
-      '<div class="empty-state"><p class="empty-state__text">아직 프롬프트가 없습니다.<br>아래에서 입력해 주세요.</p></div>');
+    existingBubbles.forEach(b => b.remove());
+    if (!emptyState) {
+      canvas.insertAdjacentHTML('beforeend',
+        '<div class="empty-state"><p class="empty-state__text">아직 프롬프트가 없습니다.<br>아래에서 입력해 주세요.</p></div>');
+    }
+    placed = [];
     return;
   }
 
+  if (emptyState) emptyState.remove();
+
   const r = canvas.getBoundingClientRect();
   const show = prompts.slice(0, 25);
+  const showIds = new Set(show.map(p => p.id));
+
+  // Remove old bubbles
+  existingBubbles.forEach(b => {
+    if (!showIds.has(b.dataset.id)) {
+      b.remove();
+    }
+  });
+
+  placed = [];
+  
+  // Register existing bubbles into 'placed'
+  const currentBubbles = Array.from(canvas.querySelectorAll('.bubble'));
+  currentBubbles.forEach(b => {
+    const x = parseFloat(b.style.left) || 0;
+    const y = parseFloat(b.style.top) || 0;
+    placed.push({ x: x, y: y, w: b.offsetWidth || 200, h: b.offsetHeight || 60 });
+  });
+
+  // Create new bubbles
   show.forEach(p => {
-    const ew = Math.min(80 + p.text.length * 4, 250);
-    const eh = 44 + Math.ceil(p.text.length / 16) * 16;
-    const pos = findPos(r.width, r.height, ew, eh);
-    placed.push({ x: pos.x, y: pos.y, w: ew, h: eh });
-    canvas.appendChild(mkBubble(p, pos.x, pos.y, false));
+    if (!canvas.querySelector(`.bubble[data-id="${p.id}"]`)) {
+      const ew = Math.min(80 + p.text.length * 4, 250);
+      const eh = 44 + Math.ceil(p.text.length / 16) * 16;
+      const pos = findPos(r.width, r.height, ew, eh);
+      placed.push({ x: pos.x, y: pos.y, w: ew, h: eh });
+      canvas.appendChild(mkBubble(p, pos.x, pos.y, true));
+    }
   });
 }
 
