@@ -92,10 +92,9 @@ function mkBubble(p, x, y, enter) {
   const a = p.author ? escHtml(p.author) : '';
   
   let widthStyle = p.width ? `width: ${p.width}px; ` : '';
-  let heightStyle = p.height ? `height: ${p.height}px; ` : '';
 
   el.innerHTML =
-    `<div class="bubble" style="${widthStyle}${heightStyle}">` +
+    `<div class="bubble" style="${widthStyle}">` +
       (a ? '<p class="bubble__author">' + a + '</p>' : '') +
       '<p class="bubble__text">' + escHtml(p.text) + '</p>' +
     '</div>' +
@@ -118,12 +117,11 @@ function mkBubble(p, x, y, enter) {
     if (e.target.closest('.bubble')) {
       const rect = innerBubble.getBoundingClientRect();
       if (e.clientX >= rect.right - 24 && e.clientY >= rect.bottom - 24) {
-        // User is resizing. Save size on pointerup anywhere on screen
+        // User is resizing width. Save width on pointerup anywhere on screen
         window.addEventListener('pointerup', () => {
           if (!p.id.startsWith('local-')) {
             const w = innerBubble.offsetWidth;
-            const h = innerBubble.offsetHeight;
-            db.collection('prompts').doc(p.id).update({ width: w, height: h }).catch(err => console.warn(err));
+            db.collection('prompts').doc(p.id).update({ width: w }).catch(err => console.warn(err));
           }
         }, { once: true });
         return;
@@ -249,11 +247,10 @@ function renderFloat() {
       placed.push({ x: targetX, y: targetY, w: ew, h: eh });
       canvasInner.appendChild(mkBubble(p, targetX, targetY, true));
     } else {
-      // Sync size if updated remotely
+      // Sync width if updated remotely (height is always auto)
       const innerBubble = existing.querySelector('.bubble');
       if (innerBubble && !existing.classList.contains('is-dragging')) {
         if (p.width && p.width !== innerBubble.offsetWidth) innerBubble.style.width = p.width + 'px';
-        if (p.height && p.height !== innerBubble.offsetHeight) innerBubble.style.height = p.height + 'px';
       }
 
       // Move existing bubble if it has remote coordinates and is NOT currently being dragged by THIS user

@@ -195,20 +195,8 @@ body {
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid var(--color-glass-border);
-  resize: both;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.bubble::-webkit-scrollbar {
-  width: 6px;
-}
-.bubble::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 10px;
-}
-.bubble:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
+  resize: horizontal;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
