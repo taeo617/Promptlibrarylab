@@ -222,8 +222,8 @@ function renderFloat() {
     
     let targetX, targetY;
     
-    // Default to wider box for natural 3-4 line wrap (e.g. 350-450px)
-    let ew = p.width || Math.min(250 + p.text.length * 3, 450);
+    // Default to a much wider box to keep text within 1~8 lines and emphasize horizontal shape
+    let ew = p.width || Math.min(350 + p.text.length * 6, 800);
     
     // On mobile, the box cannot be wider than the screen.
     if (ew > r.width - 32) ew = r.width - 32;
