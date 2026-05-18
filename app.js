@@ -253,6 +253,7 @@ function startListener() {
             time: d.createdAt ? d.createdAt.toMillis() : Date.now()
           };
         });
+        prompts.sort(function(a, b) { return b.time - a.time; });
         if (currentView === 'float') renderFloat();
         if (currentView === 'list') renderList();
       }, function (err) {
