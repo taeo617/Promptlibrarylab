@@ -128,8 +128,8 @@ body {
 }
 
 .global-nav__link.is-active {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--color-on-dark);
+  background: #FFF1BC;
+  color: #333333;
 }
 
 .global-nav__link:not(.is-active):hover {
@@ -386,8 +386,8 @@ body {
 }
 
 .filter-pill.is-active {
-  background: var(--color-ink);
-  color: var(--color-on-dark);
+  background: #FFF1BC;
+  color: #333333;
   border-color: transparent;
   opacity: 1;
 }
@@ -511,8 +511,8 @@ body {
 }
 
 .lib-filter-pill.is-active {
-  background: #00d282;
-  color: #fff;
+  background: #FFF1BC;
+  color: #333333;
   border-color: transparent;
   font-weight: 600;
 }
@@ -693,7 +693,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #FFE600;
+  background: #FFF1BC;
   color: #333333;
   border: none;
   border-radius: var(--r-pill);
