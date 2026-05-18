@@ -40,9 +40,14 @@ let sortOrder = 'newest';
 const saved = localStorage.getItem('mc_author') || '';
 if (saved) authorInput.value = saved;
 
-// Auto-select text on focus so user can immediately overwrite
+// Auto-select text on focus so user can immediately overwrite (with mobile iOS/Android support)
 authorInput.addEventListener('focus', function() {
-  this.select();
+  setTimeout(() => {
+    this.select();
+    if (this.setSelectionRange) {
+      this.setSelectionRange(0, 9999);
+    }
+  }, 50);
 });
 
 // --- Helpers ---

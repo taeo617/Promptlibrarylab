@@ -713,6 +713,11 @@ body {
 .input-bar__initials::placeholder {
   color: var(--color-ink);
   opacity: 0.25;
+  transition: opacity var(--t-fast);
+}
+
+.input-bar__initials:focus::placeholder {
+  opacity: 0;
 }
 
 .input-bar__initials:focus {
