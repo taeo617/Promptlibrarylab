@@ -117,8 +117,15 @@ function mkBubble(p, x, y, enter) {
     if (!isDragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    el.style.left = (initialLeft + dx) + 'px';
-    el.style.top = (initialTop + dy) + 'px';
+    let newLeft = initialLeft + dx;
+    let newTop = initialTop + dy;
+    
+    // Clamp within canvas bounds to prevent disappearing
+    newLeft = Math.max(0, Math.min(newLeft, canvas.offsetWidth - el.offsetWidth));
+    newTop = Math.max(0, Math.min(newTop, canvas.offsetHeight - el.offsetHeight));
+    
+    el.style.left = newLeft + 'px';
+    el.style.top = newTop + 'px';
   });
 
   el.addEventListener('pointerup', function (e) {
