@@ -671,10 +671,8 @@ body {
    ============================================ */
 .input-bar {
   flex-shrink: 0;
-  background: rgba(173, 173, 173, 0.75);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid var(--color-glass-border);
+  background: #FFF1B5;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
   padding: var(--sp-sm) var(--sp-md);
   z-index: 20;
 }
