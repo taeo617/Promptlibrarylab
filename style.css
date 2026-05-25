@@ -694,14 +694,14 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   background-color: white;
   border-radius: 50%;
-  border: 2px solid #ccc;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline><polyline points="9 18 15 12 9 6" style="display:none;"></polyline><path d="M18 15l3-3-3-3M6 9l-3 3 3 3"></path></svg>');
-  background-size: 16px;
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23333333" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 5 3 12 8 19"></polyline><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="16 5 21 12 16 19"></polyline></svg>');
+  background-size: 14px;
   background-position: center;
   background-repeat: no-repeat;
 }

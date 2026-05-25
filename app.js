@@ -1321,6 +1321,9 @@ function enterEditMode() {
   libModalEditTextareaKo.classList.remove('hidden');
   libModalEditTextareaEn.classList.add('hidden');
   
+  // Update Before/After Upload slots UI
+  updateUploadSlotsUI(libEditingItem);
+  
   document.getElementById('lib-modal-edit-title').focus();
 }
 
@@ -1454,67 +1457,152 @@ if (libAddBtn) {
   });
 }
 
-// Image attachment
-libModalImgInput.addEventListener('change', async function() {
-  if (!isAdmin || !libEditingItem) return;
-  const files = Array.from(this.files);
-  if (!files.length) return;
+// Setup Before/After image upload logic
+const beforeSlot = document.getElementById('lib-upload-slot-before');
+const afterSlot = document.getElementById('lib-upload-slot-after');
+const beforeInput = document.getElementById('lib-before-input');
+const afterInput = document.getElementById('lib-after-input');
 
-  if (!libEditingItem.images) libEditingItem.images = [];
+function setupUploadSlot(slot, input, imageIndex) {
+  if (!slot || !input) return;
 
-  for (const file of files) {
-    try {
-      const dataUrl = await readFileAsDataUrl(file);
-      // Optimized size (480px, 0.6) to guarantee fast and reliable Firestore sync for everyone
-      const compressed = await compressImage(dataUrl, 480, 0.6);
-      libEditingItem.images.push(compressed);
-    } catch (e) {
-      console.warn('Failed to process image:', e);
-    }
-  }
-
-  saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
-  renderLibImages(libEditingItem);
-  renderLibrary();
-  showToast(files.length + '개 이미지가 첨부되었습니다');
-
-  // Reset input
-  this.value = '';
-});
-
-// Open custom thumbnail selector when clicking 썸네일 등록
-if (libModalThumbBtn && libModalThumbUpload) {
-  libModalThumbBtn.addEventListener('click', function() {
-    libModalThumbUpload.click();
+  slot.addEventListener('click', function(e) {
+    // Avoid triggering input if clicked on the delete button
+    if (e.target.classList.contains('lib-upload-delete')) return;
+    input.click();
   });
 
-  // Handle custom thumbnail upload & compression
-  libModalThumbUpload.addEventListener('change', async function() {
+  // Drag and drop support
+  slot.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    slot.style.borderColor = 'var(--color-primary)';
+    slot.style.background = '#f0f5ff';
+  });
+
+  slot.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    slot.style.borderColor = 'rgba(0,0,0,0.12)';
+    slot.style.background = '#f9f9fb';
+  });
+
+  slot.addEventListener('drop', async function(e) {
+    e.preventDefault();
+    slot.style.borderColor = 'rgba(0,0,0,0.12)';
+    slot.style.background = '#f9f9fb';
+    
+    if (!isAdmin || !libEditingItem) return;
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length) {
+      await handleSlotImageUpload(files[0], slot, imageIndex);
+    }
+  });
+
+  input.addEventListener('change', async function() {
     if (!isAdmin || !libEditingItem) return;
     const files = Array.from(this.files);
-    if (!files.length) return;
-    
-    if (!libEditingItem.thumbnails) libEditingItem.thumbnails = [];
-    
-    for (const file of files) {
-      try {
-        const dataUrl = await readFileAsDataUrl(file);
-        // Generate compressed and 4:3 cropped thumbnail
-        const thumb = await generateThumbnail(dataUrl);
-        if (!libEditingItem.thumbnails.includes(thumb)) {
-          libEditingItem.thumbnails.push(thumb);
-        }
-      } catch (e) {
-        console.warn('Thumbnail upload/generation failed:', e);
-      }
+    if (files.length) {
+      await handleSlotImageUpload(files[0], slot, imageIndex);
     }
-    
-    saveLibraryOverride(libEditingItem.id, { thumbnails: libEditingItem.thumbnails });
-    renderLibImages(libEditingItem);
-    renderLibrary();
-    showToast('썸네일이 정상 등록되었습니다');
-    this.value = ''; // Reset input
+    this.value = ''; // Reset
   });
+
+  const deleteBtn = slot.querySelector('.lib-upload-delete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (!isAdmin || !libEditingItem) return;
+      if (!libEditingItem.images) libEditingItem.images = [];
+      
+      // Remove or nullify
+      libEditingItem.images[imageIndex] = null;
+      // Clean trailing nulls
+      while (libEditingItem.images.length > 0 && libEditingItem.images[libEditingItem.images.length - 1] === null) {
+        libEditingItem.images.pop();
+      }
+      
+      // Update UI for slot
+      const preview = slot.querySelector('.lib-upload-preview');
+      const placeholder = slot.querySelector('.lib-upload-placeholder');
+      
+      preview.src = '';
+      preview.classList.add('hidden');
+      deleteBtn.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+
+      saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+      renderLibrary(); // Refresh main view cards
+    });
+  }
+}
+
+async function handleSlotImageUpload(file, slot, imageIndex) {
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    // Compress and ensure high performance
+    const compressed = await compressImage(dataUrl, 640, 0.7);
+    
+    if (!libEditingItem.images) libEditingItem.images = [];
+    libEditingItem.images[imageIndex] = compressed;
+
+    // Render inside the slot
+    const preview = slot.querySelector('.lib-upload-preview');
+    const placeholder = slot.querySelector('.lib-upload-placeholder');
+    const deleteBtn = slot.querySelector('.lib-upload-delete');
+
+    preview.src = compressed;
+    preview.classList.remove('hidden');
+    deleteBtn.classList.remove('hidden');
+    placeholder.classList.add('hidden');
+
+    saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+    renderLibrary(); // Refresh cards in main view
+    showToast((imageIndex === 0 ? 'Before' : 'After') + ' 사진이 정상 등록되었습니다');
+  } catch (e) {
+    console.warn('Failed to upload image into slot:', e);
+    showToast('이미지 업로드 실패');
+  }
+}
+
+setupUploadSlot(beforeSlot, beforeInput, 0);
+setupUploadSlot(afterSlot, afterInput, 1);
+
+// Helper function to update the Before/After upload slots inside modal edit mode
+function updateUploadSlotsUI(item) {
+  const images = item.images || [];
+  
+  // Before Slot (index 0)
+  const beforePreview = beforeSlot.querySelector('.lib-upload-preview');
+  const beforePlaceholder = beforeSlot.querySelector('.lib-upload-placeholder');
+  const beforeDelete = beforeSlot.querySelector('.lib-upload-delete');
+  
+  if (images[0]) {
+    beforePreview.src = images[0];
+    beforePreview.classList.remove('hidden');
+    beforeDelete.classList.remove('hidden');
+    beforePlaceholder.classList.add('hidden');
+  } else {
+    beforePreview.src = '';
+    beforePreview.classList.add('hidden');
+    beforeDelete.classList.add('hidden');
+    beforePlaceholder.classList.remove('hidden');
+  }
+
+  // After Slot (index 1)
+  const afterPreview = afterSlot.querySelector('.lib-upload-preview');
+  const afterPlaceholder = afterSlot.querySelector('.lib-upload-placeholder');
+  const afterDelete = afterSlot.querySelector('.lib-upload-delete');
+  
+  if (images[1]) {
+    afterPreview.src = images[1];
+    afterPreview.classList.remove('hidden');
+    afterDelete.classList.remove('hidden');
+    afterPlaceholder.classList.add('hidden');
+  } else {
+    afterPreview.src = '';
+    afterPreview.classList.add('hidden');
+    afterDelete.classList.add('hidden');
+    afterPlaceholder.classList.remove('hidden');
+  }
 }
 
 // Handle Delete library item
