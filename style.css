@@ -1609,3 +1609,62 @@ body {
     text-align: center;
   }
 }
+
+/* Add Button & New Inputs Style */
+.lib-add-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  background: #FFF1BC;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lib-add-btn:hover {
+  background: #ffe394;
+  transform: translateY(-1px);
+}
+
+.lib-add-btn.hidden {
+  display: none;
+}
+
+.lib-modal__edit-desc {
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--color-ink);
+  background: #f5f5f7;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--r-md);
+  padding: 8px var(--sp-md);
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+
+.lib-modal__edit-desc:focus {
+  border-color: var(--color-primary);
+}
+
+.lib-modal__edit-cat {
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--color-ink);
+  background: #f5f5f7;
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--r-md);
+  padding: 8px var(--sp-md);
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+
+.lib-modal__edit-cat:focus {
+  border-color: var(--color-primary);
+}

@@ -99,6 +99,16 @@ function updateAuthUI() {
     navUserInfo.classList.add('hidden');
     navUserBadge.textContent = '';
   }
+  
+  // Show/Hide 새 프롬프트 추가 button based on admin status
+  const addBtn = document.getElementById('lib-add-btn');
+  if (addBtn) {
+    if (isAdmin) {
+      addBtn.classList.remove('hidden');
+    } else {
+      addBtn.classList.add('hidden');
+    }
+  }
 }
 
 function applyLoginState() {
@@ -295,8 +305,26 @@ function startLibraryOverridesListener() {
     snapshot.forEach(function(doc) {
       const itemId = doc.id;
       const data = doc.data();
-      const item = libraryData.find(d => d.id === itemId);
-      if (item) {
+      let item = libraryData.find(d => d.id === itemId);
+      if (!item) {
+        // It's a new item added by the admin!
+        item = {
+          id: itemId,
+          category: data.category || '업스케일',
+          tags: data.tags || [data.category || '업스케일'],
+          title: data.title || '',
+          desc: data.desc || '',
+          prompt: data.prompt || '',
+          images: data.images || [],
+          thumbnails: data.thumbnails || []
+        };
+        libraryData.push(item);
+      } else {
+        if (data.category !== undefined) {
+          item.category = data.category;
+          item.tags = [data.category];
+        }
+        if (data.desc !== undefined) item.desc = data.desc;
         if (data.title !== undefined) item.title = data.title;
         if (data.prompt !== undefined) item.prompt = data.prompt;
         if (data.images !== undefined) item.images = data.images;
@@ -815,6 +843,17 @@ let libCurrentCat = 'all';
 function renderLibrary() {
   const libContent = document.getElementById('lib-content');
   if (!libContent) return;
+
+  // Dynamically update filter pill counts
+  document.querySelectorAll('.lib-filter-pill').forEach(pill => {
+    const cat = pill.dataset.cat;
+    const countEl = pill.querySelector('.lib-count');
+    if (countEl) {
+      const count = cat === 'all' ? libraryData.length : libraryData.filter(d => d.category === cat).length;
+      countEl.textContent = count;
+    }
+  });
+
   const filtered = libCurrentCat === 'all' ? libraryData : libraryData.filter(d => d.category === libCurrentCat);
   libContent.innerHTML = '';
   filtered.forEach(item => {
@@ -822,10 +861,12 @@ function renderLibrary() {
     card.className = 'lib-card';
     card.dataset.id = item.id;
 
-    // Check for thumbnail
+    // Check for thumbnail, fallback to first attached image if no thumbnail generated yet
     let thumbHtml = '';
     if (item.thumbnails && item.thumbnails.length > 0) {
       thumbHtml = '<div class="lib-card__thumb"><img src="' + item.thumbnails[0] + '" alt="썸네일" /></div>';
+    } else if (item.images && item.images.length > 0) {
+      thumbHtml = '<div class="lib-card__thumb"><img src="' + item.images[0] + '" alt="썸네일" /></div>';
     }
 
     card.innerHTML =
@@ -1005,6 +1046,8 @@ function enterEditMode() {
   libModalPromptWrap.classList.add('hidden');
   libModalEditWrap.classList.remove('hidden');
   document.getElementById('lib-modal-edit-title').value = libEditingItem.title || '';
+  document.getElementById('lib-modal-edit-desc').value = libEditingItem.desc || '';
+  document.getElementById('lib-modal-edit-cat').value = libEditingItem.category || '업스케일';
   libModalEditTextarea.value = libEditingItem.prompt;
   document.getElementById('lib-modal-edit-title').focus();
 }
@@ -1019,18 +1062,36 @@ function saveEdit() {
   if (!libEditingItem) return;
   const newPrompt = libModalEditTextarea.value;
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title;
+  const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc;
+  const newCat = document.getElementById('lib-modal-edit-cat').value;
   
   libEditingItem.prompt = newPrompt;
   libEditingItem.title = newTitle;
+  libEditingItem.desc = newDesc;
+  libEditingItem.category = newCat;
+  libEditingItem.tags = [newCat];
   
   saveLibraryOverride(libEditingItem.id, { 
     prompt: newPrompt,
-    title: newTitle
+    title: newTitle,
+    desc: newDesc,
+    category: newCat,
+    tags: [newCat],
+    images: libEditingItem.images || [],
+    thumbnails: libEditingItem.thumbnails || []
   });
+
+  const existing = libraryData.find(d => d.id === libEditingItem.id);
+  if (!existing) {
+    libraryData.push(libEditingItem);
+  }
 
   // Update display
   document.getElementById('lib-modal-title').textContent = newTitle;
+  document.getElementById('lib-modal-desc').textContent = newDesc;
   document.getElementById('lib-modal-prompt').textContent = newPrompt;
+  document.getElementById('lib-modal-tags').innerHTML =
+    libEditingItem.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${escHtml(t)}</span>`).join('');
   libModalCopy._currentPrompt = newPrompt;
   
   exitEditMode();
@@ -1056,6 +1117,28 @@ libModalCopy.addEventListener('click', function() {
 libModalEdit.addEventListener('click', enterEditMode);
 libModalCancel.addEventListener('click', exitEditMode);
 libModalSave.addEventListener('click', saveEdit);
+
+// Add custom prompt creation
+const libAddBtn = document.getElementById('lib-add-btn');
+if (libAddBtn) {
+  libAddBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (!isAdmin) return;
+    const newId = 'lib-custom-' + Date.now();
+    const newItem = {
+      id: newId,
+      category: '업스케일',
+      tags: ['업스케일'],
+      title: '새 프롬프트 제목',
+      desc: '설명을 입력해주세요.',
+      prompt: '프롬프트를 입력해주세요.',
+      images: [],
+      thumbnails: []
+    };
+    openLibModal(newItem);
+    enterEditMode();
+  });
+}
 
 // Image attachment
 libModalImgInput.addEventListener('change', async function() {

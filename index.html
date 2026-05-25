@@ -57,6 +57,7 @@
               <button class="lib-filter-pill is-active" data-cat="all">전체 <span class="lib-count" id="lib-count-all">2</span></button>
               <button class="lib-filter-pill" data-cat="업스케일">업스케일 <span class="lib-count">1</span></button>
               <button class="lib-filter-pill" data-cat="합성">합성 <span class="lib-count">1</span></button>
+              <button class="lib-add-btn hidden" id="lib-add-btn">+ 새 프롬프트 추가</button>
             </div>
           </div>
           <div class="library-view__content" id="lib-content">
@@ -151,7 +152,16 @@
 
           <!-- Admin edit prompt (hidden by default) -->
           <div class="lib-modal__edit-wrap hidden" id="lib-modal-edit-wrap">
-            <input type="text" class="lib-modal__edit-title" id="lib-modal-edit-title" placeholder="제목을 입력하세요" />
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; width: 100%;">
+              <input type="text" class="lib-modal__edit-title" id="lib-modal-edit-title" placeholder="제목을 입력하세요" style="flex: 2; min-width: 200px;" />
+              <select class="lib-modal__edit-cat" id="lib-modal-edit-cat" style="flex: 1; min-width: 100px;">
+                <option value="업스케일">업스케일</option>
+                <option value="인물">인물</option>
+                <option value="사진보정">사진보정</option>
+                <option value="합성">합성</option>
+              </select>
+            </div>
+            <input type="text" class="lib-modal__edit-desc" id="lib-modal-edit-desc" placeholder="설명을 입력하세요" />
             <textarea class="lib-modal__edit-textarea" id="lib-modal-edit-textarea" rows="10"></textarea>
             <div class="lib-modal__edit-actions">
               <div class="lib-modal__edit-left">
