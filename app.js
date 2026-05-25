@@ -181,6 +181,7 @@ function loginSuccess(user) {
 }
 
 function logout() {
+  if (typeof window.closeMobileMenu === 'function') window.closeMobileMenu();
   isLoggedIn = false;
   currentUser = null;
   isAdmin = false;
@@ -240,6 +241,7 @@ function requireLogin(action) {
 
 // Auth event listeners
 navLoginBtn.addEventListener('click', function() {
+  if (typeof window.closeMobileMenu === 'function') window.closeMobileMenu();
   openLoginModal();
 });
 
@@ -1094,9 +1096,27 @@ function saveEdit() {
     libEditingItem.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${escHtml(t)}</span>`).join('');
   libModalCopy._currentPrompt = newPrompt;
   
-  exitEditMode();
-  renderLibrary();
-  showToast('프롬프트가 저장되었습니다');
+  // Delightful "Saved" animation on the save button
+  const saveBtn = document.getElementById('lib-modal-save');
+  const originalHtml = saveBtn.innerHTML;
+  saveBtn.innerHTML = '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 저장됨</span>';
+  saveBtn.style.background = '#34c759'; // Premium success green
+  saveBtn.style.color = '#fff';
+  saveBtn.style.borderColor = '#34c759';
+  saveBtn.disabled = true;
+
+  setTimeout(function() {
+    // Restore button styles
+    saveBtn.innerHTML = originalHtml;
+    saveBtn.style.background = '';
+    saveBtn.style.color = '';
+    saveBtn.style.borderColor = '';
+    saveBtn.disabled = false;
+    
+    exitEditMode();
+    renderLibrary();
+    showToast('프롬프트가 저장되었습니다');
+  }, 800);
 }
 
 function closeLibModal() {
@@ -1151,7 +1171,8 @@ libModalImgInput.addEventListener('change', async function() {
   for (const file of files) {
     try {
       const dataUrl = await readFileAsDataUrl(file);
-      const compressed = await compressImage(dataUrl, 800, 0.7);
+      // Optimized size (480px, 0.6) to guarantee fast and reliable Firestore sync for everyone
+      const compressed = await compressImage(dataUrl, 480, 0.6);
       libEditingItem.images.push(compressed);
     } catch (e) {
       console.warn('Failed to process image:', e);
@@ -1263,10 +1284,29 @@ function setView(v) {
   }
 }
 
+// --- Mobile Menu Events ---
+const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+const globalNavRight = document.getElementById('global-nav-right');
+
+window.closeMobileMenu = function() {
+  if (globalNavRight) globalNavRight.classList.remove('is-open');
+  if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('is-open');
+};
+
+if (mobileMenuBtn && mobileMenuOverlay) {
+  mobileMenuBtn.addEventListener('click', function () {
+    globalNavRight.classList.toggle('is-open');
+    mobileMenuOverlay.classList.toggle('is-open');
+  });
+  mobileMenuOverlay.addEventListener('click', closeMobileMenu);
+}
+
 // --- Events ---
-navFloat.addEventListener('click', function () { setView('float'); });
-navList.addEventListener('click', function () { setView('list'); });
-navLibrary.addEventListener('click', function () { setView('library'); });
+navFloat.addEventListener('click', function () { setView('float'); closeMobileMenu(); });
+navList.addEventListener('click', function () { setView('list'); closeMobileMenu(); });
+navLibrary.addEventListener('click', function () { setView('library'); closeMobileMenu(); });
+
 
 filterNewest.addEventListener('click', function () {
   sortOrder = 'newest';

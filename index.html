@@ -13,24 +13,35 @@
   </head>
     <body>
       <div class="page" id="page">
-        <!-- Global Nav -->
         <nav class="global-nav" id="global-nav">
           <div class="global-nav__inner">
-                <span class="global-nav__title" onclick="window.location.reload();">Promptlibrary</span>
-                <div class="global-nav__links">
-                  <button class="global-nav__link is-active" data-view="float" id="nav-float">대시보드</button>
-                  <button class="global-nav__link" data-view="list" id="nav-list">리스트</button>
-                  <button class="global-nav__link" data-view="library" id="nav-library">라이브러리</button>
-                </div>
-                <div class="global-nav__auth">
-                  <button class="nav-login-btn" id="nav-login-btn">로그인</button>
-                  <div class="nav-user-info hidden" id="nav-user-info">
-                    <span class="nav-user-badge" id="nav-user-badge"></span>
-                    <button class="nav-logout-btn" id="nav-logout-btn">로그아웃</button>
-                  </div>
+            <span class="global-nav__title" onclick="window.location.reload();">Promptlibrary</span>
+            
+            <div class="global-nav__right" id="global-nav-right">
+              <div class="global-nav__links">
+                <button class="global-nav__link is-active" data-view="float" id="nav-float">대시보드</button>
+                <button class="global-nav__link" data-view="list" id="nav-list">리스트</button>
+                <button class="global-nav__link" data-view="library" id="nav-library">라이브러리</button>
+              </div>
+              <div class="global-nav__auth">
+                <button class="nav-login-btn" id="nav-login-btn">로그인</button>
+                <div class="nav-user-info hidden" id="nav-user-info">
+                  <span class="nav-user-badge" id="nav-user-badge"></span>
+                  <button class="nav-logout-btn" id="nav-logout-btn">로그아웃</button>
                 </div>
               </div>
+            </div>
+
+            <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="메뉴">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </nav>
+        <div class="mobile-menu-overlay hidden" id="mobile-menu-overlay"></div>
 
         <!-- Floating Canvas -->
         <main class="canvas" id="canvas">
