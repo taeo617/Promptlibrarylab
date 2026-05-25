@@ -1,6 +1,7 @@
 // ============================================
 // Promptlibrary — Liquid Glass Prompts
 // Firebase Firestore real-time + Apple design
+// Auth system + Admin library editing
 // ============================================
 
 // --- Firebase Init (compat SDK) ---
@@ -36,12 +37,313 @@ let prompts = [];
 let currentView = 'float';
 let sortOrder = 'newest';
 
-// Restore author from localStorage
+// ============================================
+// AUTH SYSTEM
+// ============================================
+const AUTH_CREDENTIALS = {
+  admin: { password: '3913', role: 'admin' }
+};
+const DEFAULT_PASSWORD = '3377';
+
+let isLoggedIn = false;
+let currentUser = null; // { id, role }
+let isAdmin = false;
+
+// Auth DOM elements
+const navLoginBtn = document.getElementById('nav-login-btn');
+const navUserInfo = document.getElementById('nav-user-info');
+const navUserBadge = document.getElementById('nav-user-badge');
+const navLogoutBtn = document.getElementById('nav-logout-btn');
+const loginModal = document.getElementById('login-modal');
+const loginModalBackdrop = document.getElementById('login-modal-backdrop');
+const loginModalClose = document.getElementById('login-modal-close');
+const loginIdInput = document.getElementById('login-id');
+const loginPwInput = document.getElementById('login-pw');
+const loginError = document.getElementById('login-error');
+const loginSubmitBtn = document.getElementById('login-submit');
+
+// Pending action after login (callback)
+let pendingAuthAction = null;
+
+// --- Restore session from localStorage ---
+function restoreSession() {
+  try {
+    const session = JSON.parse(localStorage.getItem('pl_session'));
+    if (session && session.id) {
+      isLoggedIn = true;
+      currentUser = session;
+      isAdmin = session.role === 'admin';
+      updateAuthUI();
+      applyLoginState();
+    }
+  } catch (e) {
+    localStorage.removeItem('pl_session');
+  }
+}
+
+function saveSession() {
+  if (isLoggedIn && currentUser) {
+    localStorage.setItem('pl_session', JSON.stringify(currentUser));
+  } else {
+    localStorage.removeItem('pl_session');
+  }
+}
+
+function updateAuthUI() {
+  if (isLoggedIn) {
+    navLoginBtn.classList.add('hidden');
+    navUserInfo.classList.remove('hidden');
+    navUserBadge.textContent = currentUser.id.toUpperCase();
+  } else {
+    navLoginBtn.classList.remove('hidden');
+    navUserInfo.classList.add('hidden');
+    navUserBadge.textContent = '';
+  }
+}
+
+function applyLoginState() {
+  if (isLoggedIn && currentUser) {
+    // Auto-fill initials (not for admin)
+    if (currentUser.role !== 'admin') {
+      authorInput.value = currentUser.id.toUpperCase();
+      authorInput.readOnly = true;
+      authorInput.style.opacity = '0.7';
+      localStorage.setItem('pl_author', currentUser.id.toUpperCase());
+    } else {
+      // Admin uses "ADMIN" label
+      authorInput.value = 'AD';
+      authorInput.readOnly = true;
+      authorInput.style.opacity = '0.7';
+      localStorage.setItem('pl_author', 'AD');
+    }
+  } else {
+    authorInput.readOnly = false;
+    authorInput.style.opacity = '';
+  }
+}
+
+// --- Login ---
+function attemptLogin() {
+  const id = loginIdInput.value.trim();
+  const pw = loginPwInput.value.trim();
+
+  if (!id || !pw) {
+    showLoginError('아이디와 비밀번호를 입력해주세요.');
+    return;
+  }
+
+  // Check admin
+  if (id.toLowerCase() === 'admin') {
+    if (pw === AUTH_CREDENTIALS.admin.password) {
+      loginSuccess({ id: 'admin', role: 'admin' });
+      return;
+    } else {
+      showLoginError('비밀번호가 올바르지 않습니다.');
+      return;
+    }
+  }
+
+  // Check normal user (initials)
+  if (pw === DEFAULT_PASSWORD) {
+    loginSuccess({ id: id.toUpperCase().slice(0, 3), role: 'user' });
+    return;
+  }
+
+  showLoginError('아이디 또는 비밀번호가 올바르지 않습니다.');
+}
+
+function loginSuccess(user) {
+  isLoggedIn = true;
+  currentUser = user;
+  isAdmin = user.role === 'admin';
+  saveSession();
+  updateAuthUI();
+  applyLoginState();
+  closeLoginModal();
+  showToast((isAdmin ? '관리자' : currentUser.id) + '로 로그인되었습니다');
+
+  // Execute pending action
+  if (pendingAuthAction) {
+    const action = pendingAuthAction;
+    pendingAuthAction = null;
+    setTimeout(action, 100);
+  }
+}
+
+function logout() {
+  isLoggedIn = false;
+  currentUser = null;
+  isAdmin = false;
+  saveSession();
+  updateAuthUI();
+
+  // Reset author input
+  authorInput.readOnly = false;
+  authorInput.style.opacity = '';
+  authorInput.value = '';
+  localStorage.removeItem('pl_author');
+
+  // If on library view, go back to dashboard
+  if (currentView === 'library') {
+    setView('float');
+  }
+
+  showToast('로그아웃되었습니다');
+}
+
+// --- Login Modal ---
+function openLoginModal(afterLoginAction) {
+  pendingAuthAction = afterLoginAction || null;
+  loginIdInput.value = '';
+  loginPwInput.value = '';
+  loginError.classList.add('hidden');
+  loginModal.classList.add('is-open');
+  loginModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => loginIdInput.focus(), 200);
+}
+
+function closeLoginModal() {
+  loginModal.classList.remove('is-open');
+  loginModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  pendingAuthAction = null;
+}
+
+function showLoginError(msg) {
+  loginError.textContent = msg;
+  loginError.classList.remove('hidden');
+  // Re-trigger shake animation
+  loginError.style.animation = 'none';
+  loginError.offsetHeight; // force reflow
+  loginError.style.animation = '';
+}
+
+// --- Auth Gate ---
+function requireLogin(action) {
+  if (isLoggedIn) {
+    action();
+  } else {
+    openLoginModal(action);
+  }
+}
+
+// Auth event listeners
+navLoginBtn.addEventListener('click', function() {
+  openLoginModal();
+});
+
+navLogoutBtn.addEventListener('click', logout);
+
+loginModalBackdrop.addEventListener('click', closeLoginModal);
+loginModalClose.addEventListener('click', closeLoginModal);
+
+loginSubmitBtn.addEventListener('click', attemptLogin);
+
+loginPwInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+loginIdInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') loginPwInput.focus();
+});
+
+// --- Toast ---
+function showToast(msg) {
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('is-visible');
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(function() {
+    toast.classList.remove('is-visible');
+  }, 2200);
+}
+
+// ============================================
+// LIBRARY ADMIN EDITING
+// ============================================
+let libEditingItem = null;
+let libEditMode = false;
+
+// Load custom library data from localStorage
+function loadLibraryOverrides() {
+  try {
+    const overrides = JSON.parse(localStorage.getItem('pl_lib_overrides'));
+    if (overrides) {
+      // Merge overrides into libraryData
+      libraryData.forEach(item => {
+        if (overrides[item.id]) {
+          if (overrides[item.id].prompt !== undefined) {
+            item.prompt = overrides[item.id].prompt;
+          }
+          if (overrides[item.id].images !== undefined) {
+            item.images = overrides[item.id].images;
+          }
+          if (overrides[item.id].thumbnails !== undefined) {
+            item.thumbnails = overrides[item.id].thumbnails;
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to load library overrides:', e);
+  }
+}
+
+function saveLibraryOverride(itemId, data) {
+  try {
+    const overrides = JSON.parse(localStorage.getItem('pl_lib_overrides')) || {};
+    if (!overrides[itemId]) overrides[itemId] = {};
+    Object.assign(overrides[itemId], data);
+    localStorage.setItem('pl_lib_overrides', JSON.stringify(overrides));
+  } catch (e) {
+    console.warn('Failed to save library override:', e);
+  }
+}
+
+// Compress image for localStorage storage
+function compressImage(dataUrl, maxWidth, quality) {
+  return new Promise(function(resolve) {
+    const img = new Image();
+    img.onload = function() {
+      const cvs = document.createElement('canvas');
+      let w = img.width;
+      let h = img.height;
+      if (w > maxWidth) {
+        h = (maxWidth / w) * h;
+        w = maxWidth;
+      }
+      cvs.width = w;
+      cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(cvs.toDataURL('image/jpeg', quality || 0.7));
+    };
+    img.src = dataUrl;
+  });
+}
+
+// Generate thumbnail from image
+function generateThumbnail(dataUrl) {
+  return compressImage(dataUrl, 200, 0.6);
+}
+
+// ============================================
+// ORIGINAL APP LOGIC (with auth gates)
+// ============================================
+
+// Restore author from localStorage (only if not logged in)
 const saved = localStorage.getItem('pl_author') || '';
 if (saved) authorInput.value = saved;
 
 // Sync initials input with localStorage in real-time
 authorInput.addEventListener('input', function() {
+  if (authorInput.readOnly) return;
   const val = this.value.trim().toUpperCase().slice(0, 3);
   if (val) {
     localStorage.setItem('pl_author', val);
@@ -52,6 +354,7 @@ authorInput.addEventListener('input', function() {
 
 // Clear the input value on focus so user can immediately type fresh initials
 authorInput.addEventListener('focus', function() {
+  if (authorInput.readOnly) return;
   this.value = '';
   localStorage.removeItem('mc_author');
 });
@@ -122,7 +425,10 @@ function mkBubble(p, x, y, enter) {
 
   el.querySelector('.delete-btn').addEventListener('click', function (e) {
     e.stopPropagation();
-    deletePrompt(p.id, el);
+    // Auth gate for delete
+    requireLogin(function() {
+      deletePrompt(p.id, el);
+    });
   });
 
   el.addEventListener('pointerdown', function (e) {
@@ -300,7 +606,10 @@ function renderList() {
       '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
     item.querySelector('.delete-btn').addEventListener('click', function (e) {
       e.stopPropagation();
-      deletePrompt(p.id, item);
+      // Auth gate for delete
+      requireLogin(function() {
+        deletePrompt(p.id, item);
+      });
     });
     listContent.appendChild(item);
   });
@@ -357,32 +666,34 @@ function startListener() {
   }
 }
 
-// --- Submit ---
+// --- Submit (with auth gate) ---
 function submitPrompt() {
-  var text = textarea.value.trim();
-  if (!text) return;
-  var author = authorInput.value.trim().toUpperCase().slice(0, 3) || '';
-  if (author) {
-    localStorage.setItem('pl_author', author);
-  } else {
-    localStorage.removeItem('pl_author');
-  }
+  requireLogin(function() {
+    var text = textarea.value.trim();
+    if (!text) return;
+    var author = authorInput.value.trim().toUpperCase().slice(0, 3) || '';
+    if (author) {
+      localStorage.setItem('pl_author', author);
+    } else {
+      localStorage.removeItem('pl_author');
+    }
 
-  db.collection('prompts').add({
-    text: text,
-    author: author,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  }).catch(function (e) {
-    console.warn('Write failed, adding locally:', e.message);
-    prompts.unshift({ id: 'local-' + Date.now(), text: text, author: author, time: Date.now() });
-    if (currentView === 'float') renderFloat();
-    if (currentView === 'list') renderList();
+    db.collection('prompts').add({
+      text: text,
+      author: author,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function (e) {
+      console.warn('Write failed, adding locally:', e.message);
+      prompts.unshift({ id: 'local-' + Date.now(), text: text, author: author, time: Date.now() });
+      if (currentView === 'float') renderFloat();
+      if (currentView === 'list') renderList();
+    });
+
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    submitBtn.disabled = true;
+    textarea.focus();
   });
-
-  textarea.value = '';
-  textarea.style.height = 'auto';
-  submitBtn.disabled = true;
-  textarea.focus();
 }
 
 // --- Library Data ---
@@ -449,7 +760,9 @@ Recover and enhance fine-grain detail with natural realism:
 - ❌ No background object additions, removals, or repositioning
 - ❌ No text, watermarks, or graphic overlays
 - ❌ No hallucinated details not present in the original
-- ❌ No flat or muddy lighting — maintain dimensional depth at all times`
+- ❌ No flat or muddy lighting — maintain dimensional depth at all times`,
+    images: [],
+    thumbnails: []
   },
   {
     id: 'lib-composite-01',
@@ -463,7 +776,9 @@ Key requirements:
 - Seamless light integration between subject and background
 - Matching color temperature and shadow direction
 - Realistic depth of field and perspective
-- Brand-appropriate mood and tone`
+- Brand-appropriate mood and tone`,
+    images: [],
+    thumbnails: []
   }
 ];
 
@@ -479,7 +794,15 @@ function renderLibrary() {
     const card = document.createElement('div');
     card.className = 'lib-card';
     card.dataset.id = item.id;
+
+    // Check for thumbnail
+    let thumbHtml = '';
+    if (item.thumbnails && item.thumbnails.length > 0) {
+      thumbHtml = '<div class="lib-card__thumb"><img src="' + item.thumbnails[0] + '" alt="썸네일" /></div>';
+    }
+
     card.innerHTML =
+      thumbHtml +
       '<div class="lib-card__tags">' +
         item.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${t}</span>`).join('') +
       '</div>' +
@@ -554,13 +877,40 @@ const libModal = document.getElementById('lib-modal');
 const libModalBackdrop = document.getElementById('lib-modal-backdrop');
 const libModalClose = document.getElementById('lib-modal-close');
 const libModalCopy = document.getElementById('lib-modal-copy');
+const libModalEdit = document.getElementById('lib-modal-edit');
+const libModalPromptWrap = document.getElementById('lib-modal-prompt-wrap');
+const libModalEditWrap = document.getElementById('lib-modal-edit-wrap');
+const libModalEditTextarea = document.getElementById('lib-modal-edit-textarea');
+const libModalImages = document.getElementById('lib-modal-images');
+const libModalImageGrid = document.getElementById('lib-modal-image-grid');
+const libModalImgInput = document.getElementById('lib-modal-img-input');
+const libModalThumbBtn = document.getElementById('lib-modal-thumb-btn');
+const libModalSave = document.getElementById('lib-modal-save');
+const libModalCancel = document.getElementById('lib-modal-cancel');
 
 function openLibModal(item) {
+  libEditingItem = item;
+  libEditMode = false;
+
   document.getElementById('lib-modal-tags').innerHTML =
     item.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${escHtml(t)}</span>`).join('');
   document.getElementById('lib-modal-title').textContent = item.title;
   document.getElementById('lib-modal-desc').textContent = item.desc;
   document.getElementById('lib-modal-prompt').textContent = item.prompt;
+
+  // Show/hide admin edit button
+  if (isAdmin) {
+    libModalEdit.classList.remove('hidden');
+  } else {
+    libModalEdit.classList.add('hidden');
+  }
+
+  // Reset edit mode
+  libModalPromptWrap.classList.remove('hidden');
+  libModalEditWrap.classList.add('hidden');
+
+  // Show images if any
+  renderLibImages(item);
 
   libModal.classList.add('is-open');
   libModal.setAttribute('aria-hidden', 'false');
@@ -569,28 +919,201 @@ function openLibModal(item) {
   libModalCopy._currentPrompt = item.prompt;
 }
 
+function renderLibImages(item) {
+  const images = item.images || [];
+  const thumbs = item.thumbnails || [];
+  
+  if (images.length === 0 && thumbs.length === 0) {
+    libModalImages.classList.add('hidden');
+    return;
+  }
+
+  libModalImages.classList.remove('hidden');
+  libModalImageGrid.innerHTML = '';
+
+  // Show thumbnails first
+  thumbs.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'lib-modal__image-item is-thumbnail';
+    div.innerHTML = '<img src="' + src + '" alt="썸네일 ' + (i + 1) + '" />' +
+      '<span class="thumb-label">Thumb</span>' +
+      (isAdmin ? '<button class="lib-modal__image-delete" data-type="thumb" data-index="' + i + '">&times;</button>' : '');
+    libModalImageGrid.appendChild(div);
+  });
+
+  // Show images
+  images.forEach((src, i) => {
+    const div = document.createElement('div');
+    div.className = 'lib-modal__image-item';
+    div.innerHTML = '<img src="' + src + '" alt="이미지 ' + (i + 1) + '" />' +
+      (isAdmin ? '<button class="lib-modal__image-delete" data-type="image" data-index="' + i + '">&times;</button>' : '');
+    libModalImageGrid.appendChild(div);
+  });
+
+  // Attach delete handlers
+  if (isAdmin) {
+    libModalImageGrid.querySelectorAll('.lib-modal__image-delete').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const type = this.dataset.type;
+        const idx = parseInt(this.dataset.index);
+        if (type === 'thumb') {
+          item.thumbnails.splice(idx, 1);
+          saveLibraryOverride(item.id, { thumbnails: item.thumbnails });
+        } else {
+          item.images.splice(idx, 1);
+          saveLibraryOverride(item.id, { images: item.images });
+        }
+        renderLibImages(item);
+        renderLibrary(); // Refresh cards
+        showToast('이미지가 삭제되었습니다');
+      });
+    });
+  }
+}
+
+function enterEditMode() {
+  if (!isAdmin || !libEditingItem) return;
+  libEditMode = true;
+  libModalPromptWrap.classList.add('hidden');
+  libModalEditWrap.classList.remove('hidden');
+  libModalEditTextarea.value = libEditingItem.prompt;
+  libModalEditTextarea.focus();
+}
+
+function exitEditMode() {
+  libEditMode = false;
+  libModalEditWrap.classList.add('hidden');
+  libModalPromptWrap.classList.remove('hidden');
+}
+
+function saveEdit() {
+  if (!libEditingItem) return;
+  const newPrompt = libModalEditTextarea.value;
+  libEditingItem.prompt = newPrompt;
+  saveLibraryOverride(libEditingItem.id, { prompt: newPrompt });
+
+  // Update display
+  document.getElementById('lib-modal-prompt').textContent = newPrompt;
+  libModalCopy._currentPrompt = newPrompt;
+  exitEditMode();
+  showToast('프롬프트가 저장되었습니다');
+}
+
 function closeLibModal() {
   libModal.classList.remove('is-open');
   libModal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+  exitEditMode();
+  libEditingItem = null;
 }
 
+// --- Library Modal Events ---
 libModalBackdrop.addEventListener('click', closeLibModal);
 libModalClose.addEventListener('click', closeLibModal);
 libModalCopy.addEventListener('click', function() {
   copyToClipboard(this._currentPrompt, this);
 });
 
-// ESC to close
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeLibModal();
+libModalEdit.addEventListener('click', enterEditMode);
+libModalCancel.addEventListener('click', exitEditMode);
+libModalSave.addEventListener('click', saveEdit);
+
+// Image attachment
+libModalImgInput.addEventListener('change', async function() {
+  if (!isAdmin || !libEditingItem) return;
+  const files = Array.from(this.files);
+  if (!files.length) return;
+
+  if (!libEditingItem.images) libEditingItem.images = [];
+
+  for (const file of files) {
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const compressed = await compressImage(dataUrl, 800, 0.7);
+      libEditingItem.images.push(compressed);
+    } catch (e) {
+      console.warn('Failed to process image:', e);
+    }
+  }
+
+  saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+  renderLibImages(libEditingItem);
+  renderLibrary();
+  showToast(files.length + '개 이미지가 첨부되었습니다');
+
+  // Reset input
+  this.value = '';
 });
 
-// --- View Toggle ---
+// Thumbnail generation
+libModalThumbBtn.addEventListener('click', async function() {
+  if (!isAdmin || !libEditingItem) return;
+  const images = libEditingItem.images || [];
+  if (images.length === 0) {
+    showToast('먼저 이미지를 첨부해주세요');
+    return;
+  }
+
+  if (!libEditingItem.thumbnails) libEditingItem.thumbnails = [];
+
+  let count = 0;
+  for (const src of images) {
+    try {
+      const thumb = await generateThumbnail(src);
+      // Check if thumbnail already exists for this image
+      if (!libEditingItem.thumbnails.includes(thumb)) {
+        libEditingItem.thumbnails.push(thumb);
+        count++;
+      }
+    } catch (e) {
+      console.warn('Thumbnail generation failed:', e);
+    }
+  }
+
+  saveLibraryOverride(libEditingItem.id, { thumbnails: libEditingItem.thumbnails });
+  renderLibImages(libEditingItem);
+  renderLibrary();
+  showToast(count > 0 ? count + '개 썸네일이 생성되었습니다' : '이미 모든 썸네일이 생성되어 있습니다');
+});
+
+// Helper: read file as data URL
+function readFileAsDataUrl(file) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function() { resolve(reader.result); };
+    reader.onerror = function() { reject(reader.error); };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ESC to close modals
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    if (loginModal.classList.contains('is-open')) {
+      closeLoginModal();
+    } else {
+      closeLibModal();
+    }
+  }
+});
+
+// --- View Toggle (with auth gate for library) ---
 const inputBar = document.getElementById('input-bar');
 
 function setView(v) {
   if (v === currentView) return;
+
+  // Auth gate for library
+  if (v === 'library') {
+    if (!isLoggedIn) {
+      openLoginModal(function() {
+        setView('library');
+      });
+      return;
+    }
+  }
+
   currentView = v;
   navFloat.classList.toggle('is-active', v === 'float');
   navList.classList.toggle('is-active', v === 'list');
@@ -652,11 +1175,23 @@ textarea.addEventListener('keydown', function (e) {
   }
 });
 
+// --- Also gate textarea focus ---
+textarea.addEventListener('focus', function() {
+  if (!isLoggedIn) {
+    this.blur();
+    openLoginModal(function() {
+      textarea.focus();
+    });
+  }
+});
+
 // --- 1-hour auto-refresh of floating positions ---
 setInterval(function () {
   if (currentView === 'float') renderFloat();
 }, 3600000);
 
 // --- Init ---
+loadLibraryOverrides();
+restoreSession();
 startListener();
 renderFloat();
