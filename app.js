@@ -34,7 +34,7 @@ const filterOldest = document.getElementById('filter-oldest');
 
 // --- State ---
 let prompts = [];
-let currentView = 'library';
+let currentView = 'float';
 let sortOrder = 'newest';
 
 // ============================================
@@ -1976,16 +1976,33 @@ function setView(v) {
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
 const globalNavRight = document.getElementById('global-nav-right');
+const inputBar = document.getElementById('input-bar');
 
 window.closeMobileMenu = function() {
   if (globalNavRight) globalNavRight.classList.remove('is-open');
   if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('is-open');
+  
+  // Restore input bar when closing mobile menu, unless in library view
+  if (inputBar && typeof currentView !== 'undefined' && currentView !== 'library') {
+    inputBar.classList.remove('hidden');
+  }
 };
 
 if (mobileMenuBtn && mobileMenuOverlay) {
   mobileMenuBtn.addEventListener('click', function () {
-    globalNavRight.classList.toggle('is-open');
-    mobileMenuOverlay.classList.toggle('is-open');
+    const isOpen = globalNavRight.classList.toggle('is-open');
+    mobileMenuOverlay.classList.toggle('is-open', isOpen);
+    
+    // Hide input bar when mobile menu is open
+    if (inputBar) {
+      if (isOpen) {
+        inputBar.classList.add('hidden');
+      } else {
+        if (typeof currentView !== 'undefined' && currentView !== 'library') {
+          inputBar.classList.remove('hidden');
+        }
+      }
+    }
   });
   mobileMenuOverlay.addEventListener('click', closeMobileMenu);
 }
@@ -2094,4 +2111,4 @@ loadLibraryOverrides();
 startLibraryOverridesListener();
 restoreSession();
 startListener();
-setView('library');
+setView('float');
