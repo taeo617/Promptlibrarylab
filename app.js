@@ -1,5 +1,5 @@
 // ============================================
-// DESIGN MASTERCLASS — Liquid Glass Prompts
+// Promptlibrary — Liquid Glass Prompts
 // Firebase Firestore real-time + Apple design
 // ============================================
 
@@ -37,16 +37,16 @@ let currentView = 'float';
 let sortOrder = 'newest';
 
 // Restore author from localStorage
-const saved = localStorage.getItem('mc_author') || '';
+const saved = localStorage.getItem('pl_author') || '';
 if (saved) authorInput.value = saved;
 
 // Sync initials input with localStorage in real-time
 authorInput.addEventListener('input', function() {
   const val = this.value.trim().toUpperCase().slice(0, 3);
   if (val) {
-    localStorage.setItem('mc_author', val);
+    localStorage.setItem('pl_author', val);
   } else {
-    localStorage.removeItem('mc_author');
+    localStorage.removeItem('pl_author');
   }
 });
 
@@ -363,9 +363,9 @@ function submitPrompt() {
   if (!text) return;
   var author = authorInput.value.trim().toUpperCase().slice(0, 3) || '';
   if (author) {
-    localStorage.setItem('mc_author', author);
+    localStorage.setItem('pl_author', author);
   } else {
-    localStorage.removeItem('mc_author');
+    localStorage.removeItem('pl_author');
   }
 
   db.collection('prompts').add({
