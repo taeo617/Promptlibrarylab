@@ -1964,3 +1964,12 @@ body {
     gap: var(--sp-md) !important;
   }
 }
+
+/* Image Blur for Unauthorized Users */
+.is-blurred {
+  filter: blur(14px) !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  transition: filter 0.3s ease;
+}

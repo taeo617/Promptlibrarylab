@@ -34,8 +34,9 @@ const filterOldest = document.getElementById('filter-oldest');
 
 // --- State ---
 let prompts = [];
-let currentView = 'float';
+let currentView = 'library';
 let sortOrder = 'newest';
+let unauthorizedClicksCount = 0;
 
 // ============================================
 // AUTH SYSTEM
@@ -1095,7 +1096,7 @@ function renderLibrary() {
     // If exactly 2 images are uploaded, use them for Before/After slider
     if (item.images && item.images.length === 2) {
       thumbHtml = `
-        <div class="lib-card__thumb slider-container" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
+        <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
           <img src="${item.images[1]}" alt="After" class="slider-after" />
           <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
             <img src="${item.images[0]}" alt="Before" class="slider-before" />
@@ -1104,9 +1105,9 @@ function renderLibrary() {
         </div>
       `;
     } else if (item.thumbnails && item.thumbnails.length > 0) {
-      thumbHtml = '<div class="lib-card__thumb"><img src="' + item.thumbnails[0] + '" alt="썸네일" /></div>';
+      thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.thumbnails[0]}" alt="썸네일" /></div>`;
     } else if (item.images && item.images.length > 0) {
-      thumbHtml = '<div class="lib-card__thumb"><img src="' + item.images[0] + '" alt="썸네일" /></div>';
+      thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.images[0]}" alt="썸네일" /></div>`;
     }
 
     if (libLayoutMode === 'list') {
@@ -1117,7 +1118,7 @@ function renderLibrary() {
       card.style.padding = '12px var(--sp-md)';
       
       card.innerHTML = `
-        ${thumbHtml ? `<div style="width: 80px; height: 60px; flex-shrink: 0; border-radius: var(--r-sm); overflow: hidden; position: relative;">${thumbHtml.replace('lib-card__thumb', '').replace('aspect-ratio: 4 / 3', '')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
+        ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; height: 60px; flex-shrink: 0; border-radius: var(--r-sm); overflow: hidden; position: relative;">${thumbHtml.replace('lib-card__thumb', '').replace('aspect-ratio: 4 / 3', '')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
           <h3 class="lib-card__title" style="margin: 0; font-size: 15px;">${escHtml(item.title)}</h3>
           <p class="lib-card__desc" style="margin: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">${escHtml(item.desc)}</p>
@@ -1157,11 +1158,31 @@ function renderLibrary() {
     // Copy button
     card.querySelector('.lib-card__copy').addEventListener('click', function(e) {
       e.stopPropagation();
+      if (!isLoggedIn) {
+        unauthorizedClicksCount++;
+        if (unauthorizedClicksCount >= 2) {
+          unauthorizedClicksCount = 0;
+          openLoginModal();
+        } else {
+          showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
+        }
+        return;
+      }
       copyToClipboard(item.prompt, this);
     });
 
     // Card click
-    card.addEventListener('click', function() {
+    card.addEventListener('click', function(e) {
+      if (!isLoggedIn) {
+        unauthorizedClicksCount++;
+        if (unauthorizedClicksCount >= 2) {
+          unauthorizedClicksCount = 0;
+          openLoginModal();
+        } else {
+          showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
+        }
+        return;
+      }
       openLibModal(item);
     });
 
@@ -2111,4 +2132,4 @@ loadLibraryOverrides();
 startLibraryOverridesListener();
 restoreSession();
 startListener();
-setView('float');
+setView('library');
