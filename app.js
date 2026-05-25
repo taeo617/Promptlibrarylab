@@ -50,14 +50,10 @@ authorInput.addEventListener('input', function() {
   }
 });
 
-// Auto-select text on focus so user can immediately overwrite (with mobile iOS/Android support)
+// Clear the input value on focus so user can immediately type fresh initials
 authorInput.addEventListener('focus', function() {
-  setTimeout(() => {
-    this.select();
-    if (this.setSelectionRange) {
-      this.setSelectionRange(0, 9999);
-    }
-  }, 50);
+  this.value = '';
+  localStorage.removeItem('mc_author');
 });
 
 // --- Helpers ---

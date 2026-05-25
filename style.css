@@ -717,7 +717,7 @@ body {
 }
 
 .input-bar__initials:focus::placeholder {
-  opacity: 0.35;
+  opacity: 0;
 }
 
 .input-bar__initials:focus {
