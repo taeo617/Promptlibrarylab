@@ -1354,6 +1354,9 @@ function enterEditMode() {
   libModalEditWrap.classList.remove('hidden');
   if (libModalPromptTabs) libModalPromptTabs.classList.add('hidden');
   
+  // Hide details image container so we don't see double images while editing
+  libModalImages.classList.add('hidden');
+  
   document.getElementById('lib-modal-edit-title').value = libEditingItem.title || '';
   document.getElementById('lib-modal-edit-desc').value = libEditingItem.desc || '';
   document.getElementById('lib-modal-edit-tags').value = libEditingItem.tags ? libEditingItem.tags.join(', ') : '';
@@ -1382,6 +1385,11 @@ function exitEditMode() {
   libModalEditWrap.classList.add('hidden');
   libModalPromptWrap.classList.remove('hidden');
   if (libModalPromptTabs) libModalPromptTabs.classList.remove('hidden');
+  
+  // Restore images container visibility on exit
+  if (libEditingItem && (libEditingItem.images || []).length > 0) {
+    libModalImages.classList.remove('hidden');
+  }
 }
 
 function saveEdit() {
