@@ -1012,7 +1012,7 @@ function renderLibrary() {
       thumbHtml = `
         <div class="lib-card__thumb slider-container" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
           <img src="${item.images[1]}" alt="After" class="slider-after" />
-          <div class="slider-before-wrapper" style="width: 50%;">
+          <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
             <img src="${item.images[0]}" alt="Before" class="slider-before" />
           </div>
           <div class="slider-handle" style="left: 50%;"></div>
@@ -1073,7 +1073,8 @@ window.handleSliderMove = function(e, container) {
   const wrapper = container.querySelector('.slider-before-wrapper');
   const handle = container.querySelector('.slider-handle');
   if (wrapper && handle) {
-    wrapper.style.width = percentage + '%';
+    wrapper.style.clipPath = `inset(0 ${100 - percentage}% 0 0)`;
+    wrapper.style.webkitClipPath = `inset(0 ${100 - percentage}% 0 0)`;
     handle.style.left = percentage + '%';
   }
 };
