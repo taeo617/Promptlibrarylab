@@ -634,6 +634,77 @@ body {
   object-fit: cover;
 }
 
+/* Before/After Slider */
+.lib-card__thumb.slider-container {
+  position: relative;
+  cursor: ew-resize;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.slider-after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.slider-before-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 2;
+  /* border-right: 2px solid white; */
+}
+
+.slider-before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  max-width: none;
+}
+
+.slider-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background-color: white;
+  z-index: 3;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+.slider-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background-color: white;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline><polyline points="9 18 15 12 9 6" style="display:none;"></polyline><path d="M18 15l3-3-3-3M6 9l-3 3 3 3"></path></svg>');
+  background-size: 16px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 .lib-card:hover {
   transform: translateY(-2px);
   background: var(--color-glass-bg-strong);
@@ -1800,5 +1871,15 @@ body {
     height: auto;
     aspect-ratio: 4 / 3;
     overflow: hidden;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .lib-card__thumb img {
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }

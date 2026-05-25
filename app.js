@@ -1006,9 +1006,19 @@ function renderLibrary() {
     card.className = 'lib-card';
     card.dataset.id = item.id;
 
-    // Check for thumbnail, fallback to first attached image if no thumbnail generated yet
     let thumbHtml = '';
-    if (item.thumbnails && item.thumbnails.length > 0) {
+    // If exactly 2 images are uploaded, use them for Before/After slider
+    if (item.images && item.images.length === 2) {
+      thumbHtml = `
+        <div class="lib-card__thumb slider-container" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
+          <img src="${item.images[1]}" alt="After" class="slider-after" />
+          <div class="slider-before-wrapper" style="width: 50%;">
+            <img src="${item.images[0]}" alt="Before" class="slider-before" />
+          </div>
+          <div class="slider-handle" style="left: 50%;"></div>
+        </div>
+      `;
+    } else if (item.thumbnails && item.thumbnails.length > 0) {
       thumbHtml = '<div class="lib-card__thumb"><img src="' + item.thumbnails[0] + '" alt="썸네일" /></div>';
     } else if (item.images && item.images.length > 0) {
       thumbHtml = '<div class="lib-card__thumb"><img src="' + item.images[0] + '" alt="썸네일" /></div>';
@@ -1043,6 +1053,30 @@ function renderLibrary() {
     libContent.appendChild(card);
   });
 }
+
+// --- Slider Handle Move ---
+window.handleSliderMove = function(e, container) {
+  if (e.type === 'touchmove') {
+    e.stopPropagation(); // Prevent card click on mobile touch swipe
+  }
+  const rect = container.getBoundingClientRect();
+  let clientX = e.clientX;
+  if (e.type === 'touchmove') {
+    clientX = e.touches[0].clientX;
+  }
+  let x = clientX - rect.left;
+  let percentage = (x / rect.width) * 100;
+  
+  if (percentage < 0) percentage = 0;
+  if (percentage > 100) percentage = 100;
+  
+  const wrapper = container.querySelector('.slider-before-wrapper');
+  const handle = container.querySelector('.slider-handle');
+  if (wrapper && handle) {
+    wrapper.style.width = percentage + '%';
+    handle.style.left = percentage + '%';
+  }
+};
 
 // --- Library Filter ---
 document.getElementById('lib-filters').addEventListener('click', function(e) {
