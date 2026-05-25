@@ -370,22 +370,38 @@ function saveLibraryOverride(itemId, data) {
   }
 }
 
-// Compress image for localStorage storage
+// Compress image for localStorage storage and crop to a perfect 4:3 ratio
 function compressImage(dataUrl, maxWidth, quality) {
   return new Promise(function(resolve) {
     const img = new Image();
     img.onload = function() {
       const cvs = document.createElement('canvas');
+      const targetRatio = 4 / 3;
       let w = img.width;
       let h = img.height;
-      if (w > maxWidth) {
-        h = (maxWidth / w) * h;
-        w = maxWidth;
+      
+      // Calculate crop coordinates
+      let sx = 0, sy = 0, sw = w, sh = h;
+      if (w / h > targetRatio) {
+        sw = h * targetRatio;
+        sx = (w - sw) / 2;
+      } else {
+        sh = w / targetRatio;
+        sy = (h - sh) / 2;
       }
-      cvs.width = w;
-      cvs.height = h;
+      
+      // Scale destination size
+      let dw = sw;
+      let dh = sh;
+      if (dw > maxWidth) {
+        dw = maxWidth;
+        dh = maxWidth / targetRatio;
+      }
+      
+      cvs.width = dw;
+      cvs.height = dh;
       const ctx = cvs.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
       resolve(cvs.toDataURL('image/jpeg', quality || 0.7));
     };
     img.src = dataUrl;
@@ -1085,6 +1101,8 @@ const libModalImgInput = document.getElementById('lib-modal-img-input');
 const libModalThumbBtn = document.getElementById('lib-modal-thumb-btn');
 const libModalSave = document.getElementById('lib-modal-save');
 const libModalCancel = document.getElementById('lib-modal-cancel');
+const libModalDelete = document.getElementById('lib-modal-delete');
+const libModalThumbUpload = document.getElementById('lib-modal-thumb-upload');
 
 // Language tracking for the library modal
 let libActiveLang = 'ko';
@@ -1276,9 +1294,17 @@ function exitEditMode() {
 function saveEdit() {
   if (!libEditingItem) return;
   
-  const newPromptKo = libModalEditTextareaKo.value;
-  const newPromptEn = libModalEditTextareaEn.value;
-  // Use English prompt or whichever is filled as the default 'prompt' fallback field
+  let newPromptKo = libModalEditTextareaKo.value.trim();
+  let newPromptEn = libModalEditTextareaEn.value.trim();
+  
+  // Automatic fallback: if one language is missing, mirror the other
+  if (!newPromptKo && newPromptEn) {
+    newPromptKo = newPromptEn;
+  }
+  if (!newPromptEn && newPromptKo) {
+    newPromptEn = newPromptKo;
+  }
+  
   const newPrompt = newPromptEn || newPromptKo;
   
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title;
@@ -1413,36 +1439,149 @@ libModalImgInput.addEventListener('change', async function() {
   this.value = '';
 });
 
-// Thumbnail generation
-libModalThumbBtn.addEventListener('click', async function() {
-  if (!isAdmin || !libEditingItem) return;
-  const images = libEditingItem.images || [];
-  if (images.length === 0) {
-    showToast('먼저 이미지를 첨부해주세요');
-    return;
-  }
+// Open custom thumbnail selector when clicking 썸네일 등록
+if (libModalThumbBtn && libModalThumbUpload) {
+  libModalThumbBtn.addEventListener('click', function() {
+    libModalThumbUpload.click();
+  });
 
-  if (!libEditingItem.thumbnails) libEditingItem.thumbnails = [];
-
-  let count = 0;
-  for (const src of images) {
-    try {
-      const thumb = await generateThumbnail(src);
-      // Check if thumbnail already exists for this image
-      if (!libEditingItem.thumbnails.includes(thumb)) {
-        libEditingItem.thumbnails.push(thumb);
-        count++;
+  // Handle custom thumbnail upload & compression
+  libModalThumbUpload.addEventListener('change', async function() {
+    if (!isAdmin || !libEditingItem) return;
+    const files = Array.from(this.files);
+    if (!files.length) return;
+    
+    if (!libEditingItem.thumbnails) libEditingItem.thumbnails = [];
+    
+    for (const file of files) {
+      try {
+        const dataUrl = await readFileAsDataUrl(file);
+        // Generate compressed and 4:3 cropped thumbnail
+        const thumb = await generateThumbnail(dataUrl);
+        if (!libEditingItem.thumbnails.includes(thumb)) {
+          libEditingItem.thumbnails.push(thumb);
+        }
+      } catch (e) {
+        console.warn('Thumbnail upload/generation failed:', e);
       }
-    } catch (e) {
-      console.warn('Thumbnail generation failed:', e);
     }
-  }
+    
+    saveLibraryOverride(libEditingItem.id, { thumbnails: libEditingItem.thumbnails });
+    renderLibImages(libEditingItem);
+    renderLibrary();
+    showToast('썸네일이 정상 등록되었습니다');
+    this.value = ''; // Reset input
+  });
+}
 
-  saveLibraryOverride(libEditingItem.id, { thumbnails: libEditingItem.thumbnails });
-  renderLibImages(libEditingItem);
-  renderLibrary();
-  showToast(count > 0 ? count + '개 썸네일이 생성되었습니다' : '이미 모든 썸네일이 생성되어 있습니다');
-});
+// Handle Delete library item
+if (libModalDelete) {
+  libModalDelete.addEventListener('click', function() {
+    if (!isAdmin || !libEditingItem) return;
+    if (confirm('정말로 이 프롬프트를 삭제하시겠습니까?')) {
+      // 1. Delete from Firestore
+      db.collection('library_overrides').doc(libEditingItem.id).delete()
+        .then(function() {
+          console.log('Deleted override from Firestore');
+        })
+        .catch(function(e) {
+          console.warn('Failed to delete override from Firestore:', e);
+        });
+      
+      // 2. Remove from local storage
+      try {
+        const overrides = JSON.parse(localStorage.getItem('pl_lib_overrides')) || {};
+        delete overrides[libEditingItem.id];
+        localStorage.setItem('pl_lib_overrides', JSON.stringify(overrides));
+      } catch (e) {
+        console.warn('Failed to delete from localStorage:', e);
+      }
+      
+      // 3. Remove from local libraryData array
+      const index = libraryData.findIndex(item => item.id === libEditingItem.id);
+      if (index > -1) {
+        libraryData.splice(index, 1);
+      }
+      
+      closeLibModal();
+      renderLibrary();
+      showToast('프롬프트가 삭제되었습니다');
+    }
+  });
+}
+
+// Automatically generate Title, Description, and Category based on prompt text
+function autoGenerateMetadata(promptText) {
+  if (!promptText || promptText.trim().length < 10) return;
+  
+  const editTitle = document.getElementById('lib-modal-edit-title');
+  const editDesc = document.getElementById('lib-modal-edit-desc');
+  const editCat = document.getElementById('lib-modal-edit-cat');
+  
+  const currentTitle = editTitle.value.trim();
+  const currentDesc = editDesc.value.trim();
+  
+  let detectedTitle = "";
+  let detectedDesc = "";
+  let detectedCat = "업스케일";
+  
+  const textLower = promptText.toLowerCase();
+  
+  if (textLower.includes("upscale") || textLower.includes("업스케일") || textLower.includes("sony") || textLower.includes("a1")) {
+    detectedTitle = "시네마틱 이미지 업스케일";
+    detectedDesc = "Sony A1 고화질 카메라 스타일로 인물/사물 질감을 자연스럽고 사실적으로 업스케일합니다.";
+    detectedCat = "업스케일";
+  } else if (textLower.includes("composite") || textLower.includes("합성") || textLower.includes("background") || textLower.includes("배경")) {
+    detectedTitle = "자연스러운 배경 합성";
+    detectedDesc = "조명과 색온도를 유기적으로 맞추어 피사체를 배경에 완벽하게 자연스럽게 합성합니다.";
+    detectedCat = "합성";
+  } else if (textLower.includes("portrait") || textLower.includes("인물") || textLower.includes("얼굴") || textLower.includes("face")) {
+    detectedTitle = "고품질 인물 포트레이트";
+    detectedDesc = "인물의 얼굴 대칭, 이목구비 비율과 원본 디테일을 극대화하는 인물 전용 프롬프트입니다.";
+    detectedCat = "인물";
+  } else if (textLower.includes("edit") || textLower.includes("보정") || textLower.includes("color") || textLower.includes("색감") || textLower.includes("tone")) {
+    detectedTitle = "프리미엄 사진 색감 보정";
+    detectedDesc = "사진의 미세한 노이즈를 제어하고 풍부한 10비트 컬러 그레이딩으로 색감을 보정합니다.";
+    detectedCat = "사진보정";
+  } else {
+    // Fallback parsing
+    const lines = promptText.split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length > 0) {
+      detectedTitle = lines[0].replace(/[\[\]]/g, '').substring(0, 20);
+      if (detectedTitle.length >= 20) detectedTitle += "...";
+    } else {
+      detectedTitle = "새 프롬프트";
+    }
+    detectedDesc = promptText.replace(/\s+/g, ' ').substring(0, 50) + "...";
+  }
+  
+  // Enforce under 60 characters for description
+  if (detectedDesc.length > 60) {
+    detectedDesc = detectedDesc.substring(0, 57) + "...";
+  }
+  
+  // Auto fill empty or placeholder inputs
+  if (!currentTitle || currentTitle === "새 프롬프트 제목") {
+    editTitle.value = detectedTitle;
+  }
+  if (!currentDesc || currentDesc === "설명을 입력해주세요." || currentDesc === "설명을 입력하세요") {
+    editDesc.value = detectedDesc;
+  }
+  if (editCat.value === "업스케일" && detectedCat !== "업스케일") {
+    editCat.value = detectedCat;
+  }
+}
+
+// Attach listeners for autogeneration on prompt inputs
+if (libModalEditTextareaKo && libModalEditTextareaEn) {
+  libModalEditTextareaKo.addEventListener('input', function() {
+    autoGenerateMetadata(this.value);
+  });
+  libModalEditTextareaEn.addEventListener('input', function() {
+    autoGenerateMetadata(this.value);
+  });
+}
+
 
 // Helper: read file as data URL
 function readFileAsDataUrl(file) {

@@ -204,10 +204,12 @@
                     <line x1="17" y1="2" x2="17" y2="22"></line>
                     <line x1="2" y1="12" x2="22" y2="12"></line>
                   </svg>
-                  썸네일 생성
+                  썸네일 등록
                 </button>
+                <input type="file" accept="image/*" id="lib-modal-thumb-upload" style="display: none;" />
               </div>
-              <div class="lib-modal__edit-right">
+              <div class="lib-modal__edit-right" style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                <button class="lib-modal__delete-btn" id="lib-modal-delete" style="font-family: inherit; font-size: 13px; font-weight: 600; padding: 6px 14px; border-radius: var(--r-md); border: none; background: #ff3b30; color: #fff; cursor: pointer; transition: all var(--t-fast); margin-right: auto;">삭제</button>
                 <button class="lib-modal__cancel-btn" id="lib-modal-cancel">취소</button>
                 <button class="lib-modal__save-btn" id="lib-modal-save">저장</button>
               </div>
