@@ -1103,6 +1103,7 @@ const libModalSave = document.getElementById('lib-modal-save');
 const libModalCancel = document.getElementById('lib-modal-cancel');
 const libModalDelete = document.getElementById('lib-modal-delete');
 const libModalThumbUpload = document.getElementById('lib-modal-thumb-upload');
+const libModalPromptTabs = document.getElementById('lib-modal-prompt-tabs');
 
 // Language tracking for the library modal
 let libActiveLang = 'ko';
@@ -1132,6 +1133,7 @@ function openLibModal(item) {
   // Reset edit mode
   libModalPromptWrap.classList.remove('hidden');
   libModalEditWrap.classList.add('hidden');
+  if (libModalPromptTabs) libModalPromptTabs.classList.remove('hidden');
 
   // Show images if any
   renderLibImages(item);
@@ -1264,10 +1266,12 @@ function enterEditMode() {
 
   libModalPromptWrap.classList.add('hidden');
   libModalEditWrap.classList.remove('hidden');
+  if (libModalPromptTabs) libModalPromptTabs.classList.add('hidden');
   
   document.getElementById('lib-modal-edit-title').value = libEditingItem.title || '';
   document.getElementById('lib-modal-edit-desc').value = libEditingItem.desc || '';
   document.getElementById('lib-modal-edit-cat').value = libEditingItem.category || '업스케일';
+  document.getElementById('lib-modal-edit-tags').value = libEditingItem.tags ? libEditingItem.tags.join(', ') : '';
   
   // Populate the bilingual textareas
   libModalEditTextareaKo.value = libEditingItem.promptKo || libEditingItem.prompt || '';
@@ -1289,6 +1293,7 @@ function exitEditMode() {
   libEditMode = false;
   libModalEditWrap.classList.add('hidden');
   libModalPromptWrap.classList.remove('hidden');
+  if (libModalPromptTabs) libModalPromptTabs.classList.remove('hidden');
 }
 
 function saveEdit() {
@@ -1310,6 +1315,8 @@ function saveEdit() {
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title;
   const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc;
   const newCat = document.getElementById('lib-modal-edit-cat').value;
+  const newTagsVal = document.getElementById('lib-modal-edit-tags').value.trim();
+  const newTags = newTagsVal ? newTagsVal.split(',').map(t => t.trim()).filter(Boolean) : [newCat];
   
   libEditingItem.prompt = newPrompt;
   libEditingItem.promptKo = newPromptKo;
@@ -1317,7 +1324,7 @@ function saveEdit() {
   libEditingItem.title = newTitle;
   libEditingItem.desc = newDesc;
   libEditingItem.category = newCat;
-  libEditingItem.tags = [newCat];
+  libEditingItem.tags = newTags;
   
   saveLibraryOverride(libEditingItem.id, { 
     prompt: newPrompt,
@@ -1326,7 +1333,7 @@ function saveEdit() {
     title: newTitle,
     desc: newDesc,
     category: newCat,
-    tags: [newCat],
+    tags: newTags,
     images: libEditingItem.images || [],
     thumbnails: libEditingItem.thumbnails || []
   });
@@ -1339,6 +1346,7 @@ function saveEdit() {
   // Update display
   document.getElementById('lib-modal-title').textContent = newTitle;
   document.getElementById('lib-modal-desc').textContent = newDesc;
+  if (libModalPromptTabs) libModalPromptTabs.classList.remove('hidden');
   
   // Re-display active language prompt
   updatePromptDisplay();
@@ -1510,16 +1518,18 @@ if (libModalDelete) {
   });
 }
 
-// Automatically generate Title, Description, and Category based on prompt text
+// Automatically generate Title, Description, Category, and Tags based on prompt text
 function autoGenerateMetadata(promptText) {
   if (!promptText || promptText.trim().length < 10) return;
   
   const editTitle = document.getElementById('lib-modal-edit-title');
   const editDesc = document.getElementById('lib-modal-edit-desc');
   const editCat = document.getElementById('lib-modal-edit-cat');
+  const editTags = document.getElementById('lib-modal-edit-tags');
   
   const currentTitle = editTitle.value.trim();
   const currentDesc = editDesc.value.trim();
+  const currentTags = editTags.value.trim();
   
   let detectedTitle = "";
   let detectedDesc = "";
@@ -1560,6 +1570,12 @@ function autoGenerateMetadata(promptText) {
     detectedDesc = detectedDesc.substring(0, 57) + "...";
   }
   
+  let detectedTags = detectedCat;
+  if (detectedCat === "업스케일") detectedTags = "업스케일, 인물, 사진보정";
+  else if (detectedCat === "합성") detectedTags = "합성, 연출샷, 제품";
+  else if (detectedCat === "인물") detectedTags = "인물, 사진보정, 포트레이트";
+  else if (detectedCat === "사진보정") detectedTags = "사진보정, 색감, 필터";
+  
   // Auto fill empty or placeholder inputs
   if (!currentTitle || currentTitle === "새 프롬프트 제목") {
     editTitle.value = detectedTitle;
@@ -1569,6 +1585,9 @@ function autoGenerateMetadata(promptText) {
   }
   if (editCat.value === "업스케일" && detectedCat !== "업스케일") {
     editCat.value = detectedCat;
+  }
+  if (!currentTags) {
+    editTags.value = detectedTags;
   }
 }
 

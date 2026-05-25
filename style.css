@@ -763,7 +763,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--sp-sm);
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   transform: translateY(40px);
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
