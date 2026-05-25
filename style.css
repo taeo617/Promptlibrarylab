@@ -1899,9 +1899,9 @@ body {
   /* Make sure thumbnails are visible and look good on mobile */
   .lib-card__thumb {
     display: block !important;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 4 / 3;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 4 / 3 !important;
     overflow: hidden;
     visibility: visible !important;
     opacity: 1 !important;
@@ -1913,5 +1913,12 @@ body {
     object-fit: cover !important;
     visibility: visible !important;
     opacity: 1 !important;
+  }
+  
+  /* Guarantee grid structure is identically aligned on mobile */
+  .library-view__content {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+    gap: var(--sp-md) !important;
   }
 }

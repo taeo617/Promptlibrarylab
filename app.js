@@ -1906,6 +1906,19 @@ function setView(v) {
   listView.classList.add('hidden');
   libraryView.classList.add('hidden');
 
+  // Show/Hide search bar: only show in library view
+  const searchContainer = document.querySelector('.global-nav__search-container');
+  if (searchContainer) {
+    if (v === 'library') {
+      searchContainer.style.display = 'block';
+    } else {
+      searchContainer.style.display = 'none';
+      // Clear query when leaving library to avoid stale states
+      if (globalSearchInput) globalSearchInput.value = '';
+      globalSearchQuery = '';
+    }
+  }
+
   // Hide input bar in library view
   if (v === 'library') {
     inputBar.classList.add('hidden');
