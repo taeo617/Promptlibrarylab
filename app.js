@@ -1146,6 +1146,10 @@ function renderLibrary() {
       `;
     }
 
+    const displayDesc = item.desc && item.desc.trim() !== '' 
+      ? item.desc 
+      : '바로 복사해서 실전에 적용할 수 있는 고품질 AI 이미지 프롬프트입니다.';
+
     if (libLayoutMode === 'list') {
       // Modern List View Layout
       card.style.flexDirection = 'row';
@@ -1157,7 +1161,7 @@ function renderLibrary() {
         ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
           <h3 class="lib-card__title" style="margin: 0; font-size: 15px;">${escHtml(item.title)}</h3>
-          <p class="lib-card__desc" style="margin: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">${escHtml(item.desc)}</p>
+          <p class="lib-card__desc" style="margin: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">${escHtml(displayDesc)}</p>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-right: 12px; max-width: 200px;" class="list-hide-mobile">
           ${(item.tags || []).slice(0, 2).map(t => `<span class="lib-tag" style="font-size: 10px; padding: 2px 6px;">${escHtml(t)}</span>`).join('')}
@@ -1181,7 +1185,7 @@ function renderLibrary() {
         '</div>' +
         `<h3 class="lib-card__title">${escHtml(item.title)}</h3>` +
         thumbHtml +
-        `<p class="lib-card__desc">${escHtml(item.desc)}</p>` +
+        `<p class="lib-card__desc">${escHtml(displayDesc)}</p>` +
         '<div class="lib-card__footer">' +
           '<button class="lib-card__copy" data-id="' + item.id + '" aria-label="복사">' +
             '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
