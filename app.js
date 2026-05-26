@@ -968,36 +968,6 @@ Recover and enhance fine-grain detail with natural realism:
 - ❌ No flat or muddy lighting — maintain dimensional depth at all times`,
     images: [],
     thumbnails: []
-  },
-  {
-    id: 'lib-composite-01',
-    category: '합성',
-    tags: ['합성', '연출샷', '제품'],
-    title: '합성 이미지 만들기',
-    desc: '제품이나 서비스를 보여주기 위한 상황에 맞는 배경이나 소품이 포함된 자연스러운 합성 이미지를 만드는 프롬프트입니다.',
-    prompt: `Create a natural composite image showing [PRODUCT/SERVICE] in context. Place the subject in a realistic environment with complementary props and background that enhance its appeal. The scene should feel organic and lifestyle-driven, not staged or artificial.
-
-Key requirements:
-- Seamless light integration between subject and background
-- Matching color temperature and shadow direction
-- Realistic depth of field and perspective
-- Brand-appropriate mood and tone`,
-    promptKo: `콘텍스트에 맞게 자연스럽게 [제품/서비스]를 배치한 연출 합성 이미지를 생성합니다. 제품의 매력을 극대화할 수 있도록 조화로운 소품과 배경이 있는 현실적인 환경에 피사체를 배치해 주세요. 단순히 연출된 인위적인 느낌이 아닌, 자연스럽고 일상적인 라이프스타일 컷 느낌을 살려내야 합니다.
-
-핵심 요구사항:
-- 피사체와 배경 사이의 매끄러운 조명 유기적 결합
-- 일치하는 색온도와 그림자 방향성 설정
-- 사실적인 아웃포커싱(심도) 및 투시(원근감)
-- 브랜드 가치에 적절한 무드와 톤 조성`,
-    promptEn: `Create a natural composite image showing [PRODUCT/SERVICE] in context. Place the subject in a realistic environment with complementary props and background that enhance its appeal. The scene should feel organic and lifestyle-driven, not staged or artificial.
-
-Key requirements:
-- Seamless light integration between subject and background
-- Matching color temperature and shadow direction
-- Realistic depth of field and perspective
-- Brand-appropriate mood and tone`,
-    images: [],
-    thumbnails: []
   }
 ];
 
