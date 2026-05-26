@@ -1117,6 +1117,19 @@ function renderLibrary() {
       thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.thumbnails[0]}" alt="썸네일" /></div>`;
     } else if (item.images && item.images.length > 0) {
       thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.images[0]}" alt="썸네일" /></div>`;
+    } else {
+      thumbHtml = `
+        <div class="lib-card__thumb lib-card__thumb--placeholder ${!isLoggedIn ? 'is-blurred' : ''}">
+          <div class="placeholder-content">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 8px;">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span style="font-size: 11px; opacity: 0.35; font-weight: 500; letter-spacing: 0.5px;">NO IMAGE</span>
+          </div>
+        </div>
+      `;
     }
 
     if (libLayoutMode === 'list') {
