@@ -255,9 +255,12 @@
       <script src="app.js"></script>
 
       <!-- Fullscreen Lightbox Image Viewer -->
-      <div id="lib-lightbox" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;">
-        <button id="lib-lightbox-close" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1010; transition: background 0.2s;">&times;</button>
-        <img id="lib-lightbox-img" style="max-width: 95%; max-height: 90%; object-fit: contain; border-radius: var(--r-md); box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease;" />
+      <div id="lib-lightbox" style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;">
+        <button id="lib-lightbox-close" style="position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.15); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1010; transition: background 0.2s;">&times;</button>
+        <a id="lib-lightbox-download" download="image.jpg" style="position: absolute; top: 20px; right: 74px; background: rgba(255,255,255,0.15); border: none; color: white; width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1010; transition: background 0.2s; text-decoration: none;" title="다운로드">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
+        <img id="lib-lightbox-img" style="max-width: 92%; max-height: 88%; object-fit: contain; border-radius: var(--r-md); box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease;" />
       </div>
     </body>
 </html>

@@ -323,7 +323,8 @@ function startLibraryOverridesListener() {
           promptKo: data.promptKo || '',
           promptEn: data.promptEn || '',
           images: data.images || [],
-          thumbnails: data.thumbnails || []
+          thumbnails: data.thumbnails || [],
+          originalImages: data.originalImages || []
         };
         libraryData.push(item);
       } else {
@@ -338,6 +339,7 @@ function startLibraryOverridesListener() {
         if (data.promptEn !== undefined) item.promptEn = data.promptEn;
         if (data.images !== undefined) item.images = data.images;
         if (data.thumbnails !== undefined) item.thumbnails = data.thumbnails;
+        if (data.originalImages !== undefined) item.originalImages = data.originalImages;
       }
     });
     // Re-render library if active
@@ -1380,6 +1382,7 @@ document.getElementById('lib-edit-tab-en').addEventListener('click', function() 
 function renderLibImages(item) {
   const images = item.images || [];
   const thumbs = item.thumbnails || [];
+  const originalImages = item.originalImages || [];
   
   if (images.length === 0 && thumbs.length === 0) {
     libModalImages.classList.add('hidden');
@@ -1398,7 +1401,7 @@ function renderLibImages(item) {
       '<span class="thumb-label">Thumb</span>' +
       (isAdmin ? '<button class="lib-modal__image-delete" data-type="thumb" data-index="' + i + '">&times;</button>' : '');
     
-    // Lightbox setup
+    // Lightbox setup — thumbnails always use src as both display and download
     div.addEventListener('click', function(e) {
       if (e.target.classList.contains('lib-modal__image-delete')) return;
       openLightbox(src);
@@ -1407,7 +1410,7 @@ function renderLibImages(item) {
     libModalImageGrid.appendChild(div);
   });
 
-  // Show images
+  // Show images — use originalImages[i] for download if available
   images.forEach((src, i) => {
     const div = document.createElement('div');
     div.className = 'lib-modal__image-item';
@@ -1415,10 +1418,11 @@ function renderLibImages(item) {
     div.innerHTML = '<img src="' + src + '" alt="이미지 ' + (i + 1) + '" style="transition: transform 0.2s;" />' +
       (isAdmin ? '<button class="lib-modal__image-delete" data-type="image" data-index="' + i + '">&times;</button>' : '');
     
-    // Lightbox setup
+    // Lightbox setup — pass originalImages[i] as second arg so download gets full quality
     div.addEventListener('click', function(e) {
       if (e.target.classList.contains('lib-modal__image-delete')) return;
-      openLightbox(src);
+      const originalSrc = originalImages[i] || src;
+      openLightbox(src, originalSrc);
     });
 
     libModalImageGrid.appendChild(div);
@@ -1451,9 +1455,18 @@ const lightboxEl = document.getElementById('lib-lightbox');
 const lightboxImg = document.getElementById('lib-lightbox-img');
 const lightboxClose = document.getElementById('lib-lightbox-close');
 
-function openLightbox(src) {
+function openLightbox(src, originalSrc) {
   if (!lightboxEl || !lightboxImg) return;
   lightboxImg.src = src;
+  
+  // Update download button — use originalSrc if provided (full quality), else fallback to display src
+  const dlBtn = document.getElementById('lib-lightbox-download');
+  if (dlBtn) {
+    const downloadSrc = originalSrc || src;
+    dlBtn.href = downloadSrc;
+    dlBtn.download = 'image_' + Date.now() + '.jpg';
+  }
+  
   lightboxEl.style.display = 'flex';
   lightboxEl.offsetHeight; // trigger reflow
   lightboxEl.style.opacity = '1';
@@ -1732,23 +1745,38 @@ function setupUploadSlot(slot, input, imageIndex) {
 async function handleSlotImageUpload(file, slot, imageIndex) {
   try {
     const dataUrl = await readFileAsDataUrl(file);
-    // Original-grade high quality: 1200px max width and 0.9 quality
-    const compressed = await compressImage(dataUrl, 1200, 0.9);
-    
+
     if (!libEditingItem.images) libEditingItem.images = [];
-    libEditingItem.images[imageIndex] = compressed;
+    if (!libEditingItem.originalImages) libEditingItem.originalImages = [];
+
+    let displayImage;
+
+    if (imageIndex === 0) {
+      // Before image: compress for display, keep original separately for download
+      displayImage = await compressImage(dataUrl, 1200, 0.85);
+      libEditingItem.images[0] = displayImage;
+      libEditingItem.originalImages[0] = dataUrl; // full quality original
+    } else {
+      // After image: always keep full original quality (no compression)
+      displayImage = dataUrl;
+      libEditingItem.images[1] = dataUrl;
+      libEditingItem.originalImages[1] = dataUrl;
+    }
 
     // Render inside the slot
     const preview = slot.querySelector('.lib-upload-preview');
     const placeholder = slot.querySelector('.lib-upload-placeholder');
     const deleteBtn = slot.querySelector('.lib-upload-delete');
 
-    preview.src = compressed;
+    preview.src = displayImage;
     preview.classList.remove('hidden');
     deleteBtn.classList.remove('hidden');
     placeholder.classList.add('hidden');
 
-    saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+    saveLibraryOverride(libEditingItem.id, {
+      images: libEditingItem.images,
+      originalImages: libEditingItem.originalImages
+    });
     renderLibrary(); // Refresh cards in main view
     showToast((imageIndex === 0 ? 'Before' : 'After') + ' 사진이 정상 등록되었습니다');
   } catch (e) {
