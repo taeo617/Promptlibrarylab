@@ -1107,6 +1107,10 @@ body {
 /* ============================================
    NAV AUTH
    ============================================ */
+.nav-auth-greeting {
+  display: none;
+}
+
 .global-nav__auth {
   display: flex;
   align-items: center;
@@ -1852,6 +1856,18 @@ body {
     order: 1; /* Position auth at the very top */
   }
 
+  .nav-auth-greeting {
+    display: block !important;
+    width: 100%;
+    font-size: 15px;
+    line-height: 1.45;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin-bottom: 12px;
+    padding-left: 4px;
+    letter-spacing: -0.3px;
+  }
+
   .nav-login-btn,
   .nav-logout-btn {
     width: 100%;
@@ -1884,16 +1900,7 @@ body {
   }
 
   .nav-user-badge {
-    background: #f5f5f7;
-    border: 1px solid rgba(0,0,0,0.06);
-    color: #1d1d1f;
-    padding: 6px 12px;
-    border-radius: var(--r-md);
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-    font-size: 12px;
-    font-weight: 600;
+    display: none !important;
   }
 
   .mobile-menu-footer {
