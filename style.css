@@ -602,6 +602,7 @@ body {
   padding: var(--sp-md) var(--sp-lg) var(--sp-xl) var(--sp-lg);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-auto-rows: max-content;
   gap: var(--sp-lg);
   align-content: flex-start;
 }
@@ -618,6 +619,7 @@ body {
   transition: transform var(--t-fast), background var(--t-fast);
   cursor: pointer;
   overflow: hidden;
+  min-height: max-content;
 }
 .lib-card__thumb {
   display: block;
