@@ -1003,9 +1003,7 @@ function renderLibrary() {
   const libContent = document.getElementById('lib-content');
   if (!libContent) return;
 
-  // 1. Sort dynamically: newest updated/added item first
-  // Non-custom defaults (which start with static IDs) go after custom/newly created items
-  const sortedData = [...libraryData].sort((a, b) => {
+  let sortedData = [...libraryData].sort((a, b) => {
     const isCustomA = String(a.id).startsWith('lib-custom-');
     const isCustomB = String(b.id).startsWith('lib-custom-');
     if (isCustomA && !isCustomB) return -1;
@@ -1018,6 +1016,9 @@ function renderLibrary() {
     }
     return 0; // maintain original for default static
   });
+
+  // Permanently filter out the card titled '제품 연출컷 9장(식품)'
+  sortedData = sortedData.filter(item => item.title !== '제품 연출컷 9장(식품)');
 
   // Dynamically update filter pills based on all unique tags/categories
   const filterContainer = document.getElementById('lib-filters');
