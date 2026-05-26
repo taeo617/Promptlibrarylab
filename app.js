@@ -1146,8 +1146,9 @@ function renderLibrary() {
       `;
     }
 
-    const displayDesc = item.desc && item.desc.trim() !== '' 
-      ? item.desc 
+    const descStr = typeof item.desc === 'string' ? item.desc : (item.desc && typeof item.desc.toString === 'function' ? item.desc.toString() : '');
+    const displayDesc = descStr.trim() !== '' 
+      ? descStr 
       : '바로 복사해서 실전에 적용할 수 있는 고품질 AI 이미지 프롬프트입니다.';
 
     if (libLayoutMode === 'list') {
@@ -1174,8 +1175,8 @@ function renderLibrary() {
       `;
     } else {
       // Modern Grid Gallery Layout
-      card.style.flexDirection = '';
-      card.style.alignItems = '';
+      card.style.flexDirection = 'column';
+      card.style.alignItems = 'stretch';
       card.style.gap = '';
       card.style.padding = '';
       
