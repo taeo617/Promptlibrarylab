@@ -101,7 +101,7 @@ body {
 }
 
 .global-nav__title {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-on-dark);
   letter-spacing: -0.12px;
@@ -1116,7 +1116,7 @@ body {
    ============================================ */
 @media (max-width: 420px) {
   .global-nav__title {
-    font-size: 12px;
+    font-size: 15px;
   }
 
   .bubble {
