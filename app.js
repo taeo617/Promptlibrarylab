@@ -1109,8 +1109,20 @@ function renderLibrary() {
     card.dataset.id = item.id;
 
     let thumbHtml = '';
-    // If exactly 2 images are uploaded, use them for Before/After slider
-    if (item.images && item.images.length === 2) {
+    // If it's a Reference type with 3 images, use images[0] and images[2] for Before/After slider
+    if (item.images && item.images.length === 3 && item.isReferenceType) {
+      thumbHtml = `
+        <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
+          <img src="${item.images[2]}" alt="After" class="slider-after" />
+          <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
+            <img src="${item.images[0]}" alt="Before" class="slider-before" />
+          </div>
+          <div class="slider-handle" style="left: 50%;"></div>
+        </div>
+      `;
+    } 
+    // If exactly 2 images are uploaded (normal before/after), use them for slider
+    else if (item.images && item.images.length === 2 && !item.isReferenceType) {
       thumbHtml = `
         <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
           <img src="${item.images[1]}" alt="After" class="slider-after" />
@@ -1637,7 +1649,8 @@ async function saveEdit() {
     category: libEditingItem.category,
     tags: libEditingItem.tags,
     images: libEditingItem.images || [],
-    thumbnails: libEditingItem.thumbnails || []
+    thumbnails: libEditingItem.thumbnails || [],
+    isReferenceType: libEditingItem.isReferenceType || false
   });
 
   const existing = libraryData.find(d => d.id === libEditingItem.id);
