@@ -328,7 +328,11 @@ function loadLibraryOverrides() {
           // Override existing items
           if (data.category !== undefined) {
             item.category = data.category;
-            item.tags = data.tags || [data.category];
+          }
+          if (data.tags !== undefined) {
+            item.tags = data.tags;
+          } else if (data.category !== undefined) {
+            item.tags = [data.category];
           }
           if (data.desc !== undefined) item.desc = data.desc;
           if (data.title !== undefined) item.title = data.title;
@@ -385,6 +389,10 @@ function startLibraryOverridesListener() {
       } else {
         if (data.category !== undefined) {
           item.category = data.category;
+        }
+        if (data.tags !== undefined) {
+          item.tags = data.tags;
+        } else if (data.category !== undefined) {
           item.tags = [data.category];
         }
         if (data.desc !== undefined) item.desc = data.desc;
@@ -1622,7 +1630,8 @@ async function saveEdit() {
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title || '새 프롬프트';
   const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc || '';
   const newTagsVal = document.getElementById('lib-modal-edit-tags').value.trim();
-  const newTags = newTagsVal ? newTagsVal.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const parsedTags = newTagsVal ? newTagsVal.split(',').map(t => t.trim()).filter(Boolean) : [];
+  const newTags = parsedTags.slice(0, 3); // 최대 3개까지만
   const newCat = newTags.length > 0 ? newTags[0] : '기타';
   
   libEditingItem.prompt = newPrompt;
