@@ -944,7 +944,7 @@ body {
 }
 
 .lib-modal__prompt {
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Pretendard', sans-serif;
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--color-ink);
@@ -1450,7 +1450,7 @@ body {
 }
 
 .lib-modal__edit-textarea {
-  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Pretendard', sans-serif;
   font-size: 12.5px;
   line-height: 1.7;
   color: var(--color-ink);
