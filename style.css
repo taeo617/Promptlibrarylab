@@ -56,7 +56,7 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Pretendard', sans-serif;
   font-weight: 400;
   background: var(--color-canvas);
   color: var(--color-ink);
