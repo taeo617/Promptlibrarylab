@@ -645,8 +645,8 @@ function mkBubble(p, x, y, enter) {
           textEl.focus();
         }
 
-        if (navigator.vibrate) navigator.vibrate(50);
-      }, 1000);
+        if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Distinct haptic pattern
+      }, 2000); // 2 seconds
     }
 
     // Prevent drag if clicking resize handle (bottom-right 24x24 px of bubble)
