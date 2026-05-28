@@ -266,9 +266,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.bubble:hover .delete-btn,
+.bubble-wrapper:hover .delete-btn,
 .list-item:hover .delete-btn--list {
-  opacity: 0.5;
+  opacity: 0.7;
 }
 
 .delete-btn:hover {
@@ -277,13 +277,6 @@ body {
 
 .delete-btn:active {
   transform: scale(0.95);
-}
-
-/* Always visible on touch devices */
-@media (hover: none) {
-  .delete-btn {
-    opacity: 0.35;
-  }
 }
 
 /* Delete button — list item variant */
