@@ -2157,4 +2157,63 @@ body {
     font-size: 12px;
     padding: 6px 12px;
   }
+}
+
+/* ============================================
+   LIST VIEW DASHBOARD BUTTON & EDIT MODE
+   ============================================ */
+.list-dashboard-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333333;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(185%);
+  -webkit-backdrop-filter: blur(20px) saturate(185%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.list-dashboard-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.list-dashboard-btn:active {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.list-dashboard-btn svg {
+  transition: transform 0.2s var(--ease);
+}
+
+.list-dashboard-btn:hover svg {
+  transform: translateX(-2px);
+}
+
+/* List Item Edit Mode Styles */
+.list-item.is-editable {
+  background: #FFF1BC !important;
+  border-color: rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+  transform: scale(1.01);
+  transition: all 0.2s var(--ease);
+}
+
+.list-item__text[contenteditable="true"] {
+  outline: none;
+  cursor: text;
+  border-bottom: 1.5px dashed rgba(0, 0, 0, 0.25);
+  padding-bottom: 2px;
 }

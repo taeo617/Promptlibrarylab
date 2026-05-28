@@ -828,6 +828,86 @@ function renderList() {
       '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
       '</div>' +
       '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
+    
+    const textEl = item.querySelector('.list-item__text');
+    
+    // Blur handler to automatically save when clicking outside or focus shifts
+    textEl.addEventListener('blur', function() {
+      if (textEl.getAttribute('contenteditable') === 'true') {
+        textEl.removeAttribute('contenteditable');
+        item.classList.remove('is-editable');
+        
+        const newText = textEl.textContent.trim();
+        if (newText && newText !== p.text) {
+          if (!p.id.startsWith('local-')) {
+            db.collection('prompts').doc(p.id).update({ text: newText })
+              .then(() => showToast('수정되었습니다'))
+              .catch(function(err) { console.warn(err); });
+          } else {
+            p.text = newText;
+            showToast('수정되었습니다');
+          }
+        } else if (!newText) {
+          textEl.textContent = p.text; // revert if empty
+        }
+      }
+    });
+
+    // Save on Enter key press
+    textEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        textEl.blur();
+      }
+    });
+
+    let longPressTimer;
+    let startX, startY;
+
+    // Pointer events for cross-platform long press detection (mouse/touch/pen)
+    item.addEventListener('pointerdown', function(e) {
+      // Prevent double trigger if clicking internal elements like delete button or already editing
+      if (e.target.closest('.delete-btn')) return;
+      if (textEl.getAttribute('contenteditable') === 'true') return;
+
+      startX = e.clientX;
+      startY = e.clientY;
+
+      longPressTimer = setTimeout(function() {
+        const currentAuthor = localStorage.getItem('pl_author') || '';
+        if (p.author === currentAuthor && currentAuthor !== '') {
+          if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+          
+          item.classList.add('is-editable');
+          textEl.setAttribute('contenteditable', 'true');
+          textEl.focus();
+
+          // Move cursor to the very end of text
+          const range = document.createRange();
+          const sel = window.getSelection();
+          range.selectNodeContents(textEl);
+          range.collapse(false);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }, 1000); // 1.0 second
+    });
+
+    item.addEventListener('pointermove', function(e) {
+      // If pointer moves significantly, cancel the long press detection (e.g. scroll or drag)
+      if (longPressTimer && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)) {
+        clearTimeout(longPressTimer);
+      }
+    });
+
+    item.addEventListener('pointerup', function() {
+      clearTimeout(longPressTimer);
+    });
+
+    item.addEventListener('pointercancel', function() {
+      clearTimeout(longPressTimer);
+    });
+
     item.querySelector('.delete-btn').addEventListener('click', function (e) {
       e.stopPropagation();
       // Auth gate for delete
@@ -2272,6 +2352,15 @@ if (dashboardListBtn) {
   });
 }
 
+// List View inner Dashboard button
+const listDashboardBtn = document.getElementById('list-dashboard-btn');
+if (listDashboardBtn) {
+  listDashboardBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setView('float');
+  });
+}
+
 
 filterNewest.addEventListener('click', function () {
   sortOrder = 'newest';
@@ -2372,3 +2461,15 @@ startLibraryOverridesListener();
 restoreSession();
 startListener();
 setView('library');
+
+// Global event to auto-save and blur editable list items when clicking outside
+document.addEventListener('pointerdown', function(e) {
+  if (!e.target.closest('.list-item.is-editable')) {
+    document.querySelectorAll('.list-item.is-editable').forEach(function(item) {
+      const textEl = item.querySelector('.list-item__text');
+      if (textEl && textEl.getAttribute('contenteditable') === 'true') {
+        textEl.blur();
+      }
+    });
+  }
+});
