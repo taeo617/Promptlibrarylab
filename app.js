@@ -614,6 +614,27 @@ function mkBubble(p, x, y, enter) {
     });
   });
 
+  // Double click for desktop website version to edit
+  el.addEventListener('dblclick', function (e) {
+    if (e.target.closest('.delete-btn')) return;
+    if (textEl.getAttribute('contenteditable') === 'true') return;
+
+    const currentAuthor = localStorage.getItem('pl_author') || '';
+    if (p.author === currentAuthor && currentAuthor !== '') {
+      el.classList.add('is-editable');
+      textEl.setAttribute('contenteditable', 'true');
+      textEl.focus();
+
+      // Move cursor to the very end of text
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(textEl);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+
   el.addEventListener('pointerdown', function (e) {
     if (e.target.closest('.delete-btn')) return;
     
@@ -906,6 +927,27 @@ function renderList() {
 
     item.addEventListener('pointercancel', function() {
       clearTimeout(longPressTimer);
+    });
+
+    // Double click for desktop website version to edit list item
+    item.addEventListener('dblclick', function(e) {
+      if (e.target.closest('.delete-btn')) return;
+      if (textEl.getAttribute('contenteditable') === 'true') return;
+
+      const currentAuthor = localStorage.getItem('pl_author') || '';
+      if (p.author === currentAuthor && currentAuthor !== '') {
+        item.classList.add('is-editable');
+        textEl.setAttribute('contenteditable', 'true');
+        textEl.focus();
+
+        // Move cursor to the very end of text
+        const range = document.createRange();
+        const sel = window.getSelection();
+        range.selectNodeContents(textEl);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
     });
 
     item.querySelector('.delete-btn').addEventListener('click', function (e) {
