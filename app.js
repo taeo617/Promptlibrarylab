@@ -646,7 +646,7 @@ function mkBubble(p, x, y, enter) {
         }
 
         if (navigator.vibrate) navigator.vibrate([50, 50, 50]); // Distinct haptic pattern
-      }, 2000); // 2 seconds
+      }, 1800); // 1.8 seconds
     }
 
     // Prevent drag if clicking resize handle (bottom-right 24x24 px of bubble)
