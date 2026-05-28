@@ -1119,7 +1119,7 @@ function renderLibrary() {
 
   filtered.forEach(item => {
     const card = document.createElement('div');
-    card.className = 'lib-card';
+    card.className = 'lib-card' + (libLayoutMode === 'list' ? ' is-list' : '');
     card.dataset.id = item.id;
 
     let thumbHtml = '';

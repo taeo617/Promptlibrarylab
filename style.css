@@ -501,8 +501,10 @@ body {
   line-height: 1.47;
   letter-spacing: -0.374px;
   color: var(--color-ink);
-  word-break: keep-all;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
+
 
 .list-item__time {
   font-size: 12px;
@@ -837,6 +839,33 @@ body {
   opacity: 0.35;
   white-space: nowrap;
 }
+
+/* --- Library Card List Layout Resets --- */
+.lib-card.is-list {
+  box-shadow: none;
+  min-height: 0;
+}
+
+.lib-card.is-list .lib-card__title {
+  height: auto !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.lib-card.is-list .lib-card__desc {
+  height: auto !important;
+  min-height: 0 !important;
+  margin-bottom: 0 !important;
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
 
 /* ============================================
    LIBRARY MODAL
@@ -1972,6 +2001,49 @@ body {
     grid-template-columns: 1fr !important;
     gap: var(--sp-md) !important;
   }
+
+  /* Mobile List View Optimizations (Global Nav List Tab) */
+  .list-view__header, .list-view__content {
+    padding-left: var(--sp-sm) !important; /* 12px instead of 16px */
+    padding-right: var(--sp-sm) !important;
+  }
+
+  .list-view__header {
+    margin-top: var(--sp-md) !important; /* 16px instead of 32px */
+    margin-bottom: var(--sp-sm) !important; /* 12px instead of 16px */
+  }
+
+  .list-item {
+    padding: var(--sp-sm) var(--sp-md) !important; /* 12px top/bottom, 16px left/right instead of 24px */
+    gap: var(--sp-sm) !important; /* 12px instead of 16px */
+    border-radius: var(--r-md) !important; /* 12px instead of 20px */
+  }
+
+  .list-item__text {
+    font-size: 14.5px !important; /* 14.5px instead of 16px for better legibility and space fitting */
+  }
+
+  /* Mobile Library List Layout Optimizations */
+  .library-view__content {
+    padding: var(--sp-md) var(--sp-md) var(--sp-lg) var(--sp-md) !important; /* 16px instead of 24px left/right */
+  }
+
+  .lib-card.is-list {
+    padding: 10px var(--sp-sm) !important; /* 12px padding left/right instead of 16px */
+    gap: 12px !important;
+  }
+
+  .lib-card.is-list .lib-card__thumb {
+    width: 70px !important; /* Slightly smaller thumbnail on mobile */
+  }
+
+  .lib-card.is-list .lib-card__title {
+    font-size: 14px !important;
+  }
+
+  .lib-card.is-list .lib-card__desc {
+    font-size: 12px !important;
+  }
 }
 
 /* Image Blur for Unauthorized Users */
@@ -1982,3 +2054,20 @@ body {
   -webkit-user-select: none !important;
   transition: filter 0.3s ease;
 }
+
+/* Extra-small mobile optimizations */
+@media (max-width: 480px) {
+  .list-item {
+    padding: var(--sp-sm) !important; /* 12px padding instead of 16px */
+    gap: 10px !important;
+  }
+  .list-item__author {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 11px !important;
+  }
+  .list-item__text {
+    font-size: 13.5px !important;
+    line-height: 1.4 !important;
+  }
+}
