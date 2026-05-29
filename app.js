@@ -668,6 +668,16 @@ function mkBubble(p, x, y, enter) {
     '</div>' +
     '<button class="delete-btn" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
   
+  // Unread badge logic
+  const readMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
+  const readCount = readMap[p.id] || 0;
+  const currentCount = p.comments ? p.comments.length : 0;
+  if (currentCount > readCount) {
+    const badge = document.createElement('div');
+    badge.className = 'unread-badge';
+    el.appendChild(badge);
+  }
+  
   const innerBubble = el.querySelector('.bubble');
   const textEl = el.querySelector('.bubble__text');
 
@@ -833,6 +843,13 @@ function mkBubble(p, x, y, enter) {
           } else {
             const input = commentsSec.querySelector('.comments-input');
             if (input && isLoggedIn) setTimeout(() => input.focus(), 50);
+            
+            // Mark as read
+            const rMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
+            rMap[p.id] = p.comments ? p.comments.length : 0;
+            localStorage.setItem('pl_read_comments', JSON.stringify(rMap));
+            const badge = el.querySelector('.unread-badge');
+            if (badge) badge.remove();
           }
         }
       }
@@ -1049,6 +1066,21 @@ function renderFloat() {
       
       // Update comments
       renderComments(existing, p.comments, p.id);
+      
+      // Update unread badge
+      const rMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
+      const rCount = rMap[p.id] || 0;
+      const cCount = p.comments ? p.comments.length : 0;
+      let badge = existing.querySelector('.unread-badge');
+      if (cCount > rCount) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'unread-badge';
+          existing.appendChild(badge);
+        }
+      } else {
+        if (badge) badge.remove();
+      }
     }
   });
 }
@@ -1126,14 +1158,27 @@ function renderList() {
     const item = document.createElement('div');
     item.className = 'list-item';
     item.style.animationDelay = (i * 0.03) + 's';
+    item.style.flexDirection = 'column';
+    item.style.alignItems = 'stretch';
     const a = p.author ? escHtml(p.author) : '—';
     item.innerHTML =
-      '<div class="list-item__author">' + a + '</div>' +
-      '<div class="list-item__body">' +
-      '<p class="list-item__text">' + escHtml(p.text) + '</p>' +
-      '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
+      '<div style="display:flex; width:100%; gap:var(--sp-md);">' +
+        '<div class="list-item__author">' + a + '</div>' +
+        '<div class="list-item__body">' +
+          '<p class="list-item__text">' + escHtml(p.text) + '</p>' +
+          '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
+        '</div>' +
+        '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>' +
       '</div>' +
-      '<button class="delete-btn delete-btn--list" data-id="' + p.id + '" aria-label="삭제">&times;</button>';
+      '<div class="comments-section hidden" style="max-width:100%; margin-top:0;">' +
+        '<div class="comments-list"></div>' +
+        '<div class="comments-input-wrap">' +
+          '<input type="text" class="comments-input" placeholder="댓글 달기..." maxlength="200" />' +
+          '<button class="comments-submit" aria-label="댓글 작성">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>';
     
     const textEl = item.querySelector('.list-item__text');
     
@@ -1169,15 +1214,17 @@ function renderList() {
 
     let longPressTimer;
     let startX, startY;
+    let hasMovedList = false;
 
     // Pointer events for cross-platform long press detection (mouse/touch/pen)
     item.addEventListener('pointerdown', function(e) {
-      // Prevent double trigger if clicking internal elements like delete button or already editing
       if (e.target.closest('.delete-btn')) return;
+      if (e.target.closest('.comments-section')) return;
       if (textEl.getAttribute('contenteditable') === 'true') return;
 
       startX = e.clientX;
       startY = e.clientY;
+      hasMovedList = false;
 
       longPressTimer = setTimeout(function() {
         const currentAuthor = localStorage.getItem('pl_author') || '';
@@ -1201,6 +1248,9 @@ function renderList() {
     });
 
     item.addEventListener('pointermove', function(e) {
+      if (Math.abs(e.clientX - startX) > 5 || Math.abs(e.clientY - startY) > 5) {
+        hasMovedList = true;
+      }
       // If pointer moves significantly, cancel the long press detection (e.g. scroll or drag)
       if (longPressTimer && (Math.abs(e.clientX - startX) > 10 || Math.abs(e.clientY - startY) > 10)) {
         clearTimeout(longPressTimer);
@@ -1209,6 +1259,29 @@ function renderList() {
 
     item.addEventListener('pointerup', function() {
       clearTimeout(longPressTimer);
+      if (!hasMovedList && !textEl.getAttribute('contenteditable')) {
+        const commentsSec = item.querySelector('.comments-section');
+        if (commentsSec) {
+          const wasHidden = commentsSec.classList.contains('hidden');
+          // Hide other open comments
+          document.querySelectorAll('.list-item .comments-section:not(.hidden)').forEach(sec => {
+            if (sec !== commentsSec) sec.classList.add('hidden');
+          });
+          commentsSec.classList.toggle('hidden');
+          if (!wasHidden) {
+            const input = commentsSec.querySelector('.comments-input');
+            if (input) input.blur();
+          } else {
+            const input = commentsSec.querySelector('.comments-input');
+            if (input && isLoggedIn) setTimeout(() => input.focus(), 50);
+            
+            // Mark as read
+            const rMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
+            rMap[p.id] = p.comments ? p.comments.length : 0;
+            localStorage.setItem('pl_read_comments', JSON.stringify(rMap));
+          }
+        }
+      }
     });
 
     item.addEventListener('pointercancel', function() {
@@ -1244,6 +1317,51 @@ function renderList() {
         deletePrompt(p.id, item);
       });
     });
+    
+    // Initialize comment rendering
+    renderComments(item, p.comments, p.id);
+    
+    // Set up comment submit event
+    const cSubmit = item.querySelector('.comments-submit');
+    const cInput = item.querySelector('.comments-input');
+    
+    const submitCommentHandler = () => {
+      requireLogin(() => {
+        const text = cInput.value.trim();
+        if (!text) return;
+        const currentAuthor = localStorage.getItem('pl_author') || '';
+        
+        const newComment = {
+          id: Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+          text: text,
+          author: currentAuthor,
+          createdAt: Date.now()
+        };
+        
+        if (!p.id.startsWith('local-')) {
+          db.collection('prompts').doc(p.id).update({
+            comments: firebase.firestore.FieldValue.arrayUnion(newComment)
+          }).catch(err => console.warn('Comment add failed', err));
+        } else {
+          if (!p.comments) p.comments = [];
+          p.comments.push(newComment);
+          renderComments(item, p.comments, p.id);
+        }
+        cInput.value = '';
+      });
+    };
+
+    if (cSubmit && cInput) {
+      cSubmit.addEventListener('click', (e) => {
+        e.stopPropagation();
+        submitCommentHandler();
+      });
+      cInput.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') submitCommentHandler();
+      });
+    }
+
     listContent.appendChild(item);
   });
 }

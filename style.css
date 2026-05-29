@@ -2416,4 +2416,19 @@ body.is-admin .delete-btn--list {
 .comments-submit:active {
   transform: scale(0.95);
 }
+
+/* Unread Badge for Dashboard Bubbles */
+.unread-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  background-color: #ff453a;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
 
