@@ -622,8 +622,6 @@ body.is-admin .delete-btn--list {
 
 .library-view__content {
   flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   padding: var(--sp-md) var(--sp-lg) var(--sp-xl) var(--sp-lg);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

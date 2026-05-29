@@ -1161,15 +1161,37 @@ function renderList() {
     return;
   }
   
-  sorted.sort((a, b) => sortOrder === 'oldest' ? a.time - b.time : b.time - a.time);
+  const getActiveTime = (p) => {
+    let t = p.time || 0;
+    if (p.comments && p.comments.length) {
+      const lastC = Math.max(...p.comments.map(c => c.createdAt || 0));
+      if (lastC > t) t = lastC;
+    }
+    return t;
+  };
+  
+  sorted.sort((a, b) => sortOrder === 'oldest' ? getActiveTime(a) - getActiveTime(b) : getActiveTime(b) - getActiveTime(a));
+  
   sorted.forEach((p, i) => {
     const item = document.createElement('div');
     item.className = 'list-item';
+    item.style.position = 'relative';
     item.style.animationDelay = (i * 0.03) + 's';
     item.style.flexDirection = 'column';
     item.style.alignItems = 'stretch';
     const a = p.author ? escHtml(p.author) : '—';
+    
+    // Unread badge logic
+    const rMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
+    const rCount = rMap[p.id] || 0;
+    const cCount = p.comments ? p.comments.length : 0;
+    let badgeHtml = '';
+    if (cCount > rCount) {
+      badgeHtml = '<div class="unread-badge"></div>';
+    }
+
     item.innerHTML =
+      badgeHtml +
       '<div style="display:flex; width:100%; gap:var(--sp-md);">' +
         '<div class="list-item__author">' + a + '</div>' +
         '<div class="list-item__body">' +
@@ -1287,6 +1309,8 @@ function renderList() {
             const rMap = JSON.parse(localStorage.getItem('pl_read_comments') || '{}');
             rMap[p.id] = p.comments ? p.comments.length : 0;
             localStorage.setItem('pl_read_comments', JSON.stringify(rMap));
+            const badge = item.querySelector('.unread-badge');
+            if (badge) badge.remove();
           }
         }
       }
