@@ -2668,7 +2668,11 @@ function setupUploadSlot(slot, input, imageIndex) {
     slot.style.borderColor = 'rgba(0,0,0,0.12)';
     slot.style.background = '#f9f9fb';
     
-    if (!isAdmin || !libEditingItem) return;
+    if (!libEditingItem) return;
+    const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
+    const allowed = isAdmin || (isLoggedIn && isNewCustom);
+    if (!allowed) return;
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length) {
       await handleSlotImageUpload(files[0], slot, imageIndex);
@@ -2676,7 +2680,11 @@ function setupUploadSlot(slot, input, imageIndex) {
   });
 
   input.addEventListener('change', async function() {
-    if (!isAdmin || !libEditingItem) return;
+    if (!libEditingItem) return;
+    const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
+    const allowed = isAdmin || (isLoggedIn && isNewCustom);
+    if (!allowed) return;
+
     const files = Array.from(this.files);
     if (files.length) {
       await handleSlotImageUpload(files[0], slot, imageIndex);
@@ -2688,7 +2696,11 @@ function setupUploadSlot(slot, input, imageIndex) {
   if (deleteBtn) {
     deleteBtn.addEventListener('click', function(e) {
       e.stopPropagation();
-      if (!isAdmin || !libEditingItem) return;
+      if (!libEditingItem) return;
+      const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
+      const allowed = isAdmin || (isLoggedIn && isNewCustom);
+      if (!allowed) return;
+
       if (!libEditingItem.images) libEditingItem.images = [];
       
       // Remove or nullify
@@ -2707,7 +2719,9 @@ function setupUploadSlot(slot, input, imageIndex) {
       deleteBtn.classList.add('hidden');
       placeholder.classList.remove('hidden');
 
-      saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+      if (isAdmin) {
+        saveLibraryOverride(libEditingItem.id, { images: libEditingItem.images });
+      }
       renderLibrary(); // Refresh main view cards
     });
   }
@@ -2736,10 +2750,12 @@ async function handleSlotImageUpload(file, slot, imageIndex) {
     deleteBtn.classList.remove('hidden');
     placeholder.classList.add('hidden');
 
-    saveLibraryOverride(libEditingItem.id, {
-      images: libEditingItem.images,
-      originalImages: libEditingItem.originalImages
-    });
+    if (isAdmin) {
+      saveLibraryOverride(libEditingItem.id, {
+        images: libEditingItem.images,
+        originalImages: libEditingItem.originalImages
+      });
+    }
     renderLibrary(); // Refresh cards in main view
     showToast((imageIndex === 0 ? 'Before' : 'After') + ' 사진이 정상 등록되었습니다');
   } catch (e) {
