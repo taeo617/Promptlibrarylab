@@ -129,7 +129,7 @@ function updateAuthUI() {
   // Show/Hide 새 프롬프트 추가 button based on admin status
   const addBtn = document.getElementById('lib-add-btn');
   if (addBtn) {
-    if (isAdmin) {
+    if (isLoggedIn) {
       addBtn.classList.remove('hidden');
     } else {
       addBtn.classList.add('hidden');
@@ -503,6 +503,40 @@ function startLibraryOverridesListener() {
   }, function(error) {
     console.warn('Failed to listen to library overrides from Firestore:', error);
   });
+}
+
+let libraryRequests = [];
+function startLibraryRequestsListener() {
+  try {
+    db.collection('library_requests').onSnapshot(function(snapshot) {
+      libraryRequests = snapshot.docs.map(function(doc) {
+        const d = doc.data();
+        return {
+          id: doc.id,
+          prompt: d.prompt || '',
+          promptKo: d.promptKo || '',
+          promptEn: d.promptEn || '',
+          title: d.title || '',
+          desc: d.desc || '',
+          category: d.category || '기타',
+          tags: Array.isArray(d.tags) ? d.tags : [d.category || '기타'],
+          images: Array.isArray(d.images) ? d.images : [],
+          thumbnails: Array.isArray(d.thumbnails) ? d.thumbnails : [],
+          isReferenceType: d.isReferenceType || false,
+          author: d.author || 'GST',
+          isPendingRequest: true
+        };
+      });
+      // Re-render library if active
+      if (currentView === 'library') {
+        renderLibrary();
+      }
+    }, function(error) {
+      console.warn('Failed to listen to library requests:', error);
+    });
+  } catch (e) {
+    console.warn('Failed to start library requests listener:', e.message);
+  }
 }
 
 
@@ -1731,6 +1765,11 @@ function renderLibrary() {
     const tagArray = Array.from(uniqueTags);
     let html = `<button class="lib-filter-pill ${libCurrentCat === 'all' ? 'is-active' : ''}" data-cat="all">전체 <span class="lib-count">${sortedData.length}</span></button>`;
     
+    if (isAdmin) {
+      const count = libraryRequests.length;
+      html += `<button class="lib-filter-pill ${libCurrentCat === 'pending_req' ? 'is-active' : ''}" data-cat="pending_req" style="background: rgba(255, 59, 48, 0.08); color: #ff3b30; border-color: rgba(255, 59, 48, 0.2); font-weight: ${libCurrentCat === 'pending_req' ? '600' : '400'};">승인 대기 <span class="lib-count" style="color: #ff3b30;">${count}</span></button>`;
+    }
+
     tagArray.forEach(cat => {
       const count = sortedData.filter(d => (d.tags && d.tags.includes(cat)) || d.category === cat).length;
       html += `<button class="lib-filter-pill ${libCurrentCat === cat ? 'is-active' : ''}" data-cat="${escHtml(cat)}">${escHtml(cat)} <span class="lib-count">${count}</span></button>`;
@@ -1742,7 +1781,10 @@ function renderLibrary() {
       // Ensure the add button has its event listener if it was overwritten
       addBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        if (!isAdmin) return;
+        if (!isLoggedIn) {
+          openLoginModal();
+          return;
+        }
         const typeModal = document.getElementById('lib-type-modal');
         if (typeModal) {
           typeModal.classList.remove('hidden');
@@ -1753,9 +1795,14 @@ function renderLibrary() {
   }
 
   // 2. Filter by Category
-  let filtered = libCurrentCat === 'all' 
-    ? sortedData 
-    : sortedData.filter(d => (d.tags && d.tags.includes(libCurrentCat)) || d.category === libCurrentCat);
+  let filtered = [];
+  if (libCurrentCat === 'pending_req') {
+    filtered = [...libraryRequests];
+  } else {
+    filtered = libCurrentCat === 'all' 
+      ? sortedData 
+      : sortedData.filter(d => (d.tags && d.tags.includes(libCurrentCat)) || d.category === libCurrentCat);
+  }
 
   // 3. Filter by Search Query (Title, description, tags, prompt)
   if (globalSearchQuery.trim() !== '') {
@@ -1836,6 +1883,8 @@ function renderLibrary() {
       ? descStr 
       : '바로 복사해서 실전에 적용할 수 있는 고품질 AI 이미지 프롬프트입니다.';
 
+    const pendingBadge = item.isPendingRequest ? `<span style="font-size: 10px; font-weight: bold; background: #ff3b30; color: #fff; padding: 2px 6px; border-radius: var(--r-sm); margin-right: 6px; flex-shrink: 0; display: inline-block;">대기</span>` : '';
+
     if (libLayoutMode === 'list') {
       // Modern List View Layout
       card.style.flexDirection = 'row';
@@ -1843,19 +1892,31 @@ function renderLibrary() {
       card.style.gap = '16px';
       card.style.padding = '12px var(--sp-md)';
       
+      if (item.isPendingRequest) {
+        card.style.border = '1.5px dashed #ff3b30';
+        card.style.background = 'rgba(255, 59, 48, 0.03)';
+      } else {
+        card.style.border = '';
+        card.style.background = '';
+      }
+
+      const copyArea = item.isPendingRequest 
+        ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600;">요청자: ${item.author || 'GST'}</span>`
+        : `<button class="lib-card__copy" data-id="${item.id}" aria-label="복사" style="padding: 4px 10px; font-size: 11px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
+           </button>`;
+
       card.innerHTML = `
         ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
-          <h3 class="lib-card__title" style="margin: 0; font-size: 15px;">${escHtml(item.title)}</h3>
+          <h3 class="lib-card__title" style="margin: 0; font-size: 15px; display: flex; align-items: center;">${pendingBadge}${escHtml(item.title)}</h3>
           <p class="lib-card__desc" style="margin: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">${escHtml(displayDesc)}</p>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-right: 12px; max-width: 200px;" class="list-hide-mobile">
           ${(item.tags || []).slice(0, 2).map(t => `<span class="lib-tag" style="font-size: 10px; padding: 2px 6px;">${escHtml(t)}</span>`).join('')}
         </div>
         <div style="display: flex; align-items: center; gap: var(--sp-sm); flex-shrink: 0;">
-          <button class="lib-card__copy" data-id="${item.id}" aria-label="복사" style="padding: 4px 10px; font-size: 11px;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
-          </button>
+          ${copyArea}
         </div>
       `;
     } else {
@@ -1865,37 +1926,51 @@ function renderLibrary() {
       card.style.gap = '';
       card.style.padding = '';
       
+      if (item.isPendingRequest) {
+        card.style.border = '1.5px dashed #ff3b30';
+        card.style.background = 'rgba(255, 59, 48, 0.03)';
+      } else {
+        card.style.border = '';
+        card.style.background = '';
+      }
+
+      const copyArea = item.isPendingRequest 
+        ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600; text-align: left;">요청자: ${item.author || 'GST'}</span>`
+        : `<button class="lib-card__copy" data-id="${item.id}" aria-label="복사">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
+           </button>`;
+
       card.innerHTML =
         '<div class="lib-card__tags">' +
           item.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${t}</span>`).join('') +
         '</div>' +
-        `<h3 class="lib-card__title">${escHtml(item.title)}</h3>` +
+        `<h3 class="lib-card__title" style="display: flex; align-items: center;">${pendingBadge}${escHtml(item.title)}</h3>` +
         thumbHtml +
         `<p class="lib-card__desc">${escHtml(displayDesc)}</p>` +
         '<div class="lib-card__footer">' +
-          '<button class="lib-card__copy" data-id="' + item.id + '" aria-label="복사">' +
-            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>' +
-            ' 복사' +
-          '</button>' +
+          copyArea +
           '<span class="lib-card__detail-hint">자세히 보기 →</span>' +
         '</div>';
     }
 
     // Copy button
-    card.querySelector('.lib-card__copy').addEventListener('click', function(e) {
-      e.stopPropagation();
-      if (!isLoggedIn) {
-        unauthorizedClicksCount++;
-        if (unauthorizedClicksCount >= 2) {
-          unauthorizedClicksCount = 0;
-          openLoginModal();
-        } else {
-          showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
+    const copyBtn = card.querySelector('.lib-card__copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!isLoggedIn) {
+          unauthorizedClicksCount++;
+          if (unauthorizedClicksCount >= 2) {
+            unauthorizedClicksCount = 0;
+            openLoginModal();
+          } else {
+            showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
+          }
+          return;
         }
-        return;
-      }
-      copyToClipboard(item.prompt, this);
-    });
+        copyToClipboard(item.prompt, this);
+      });
+    }
 
     // Card click
     card.addEventListener('click', function(e) {
@@ -2022,10 +2097,35 @@ function openLibModal(item) {
   updatePromptDisplay();
 
   // Show/hide admin edit button
-  if (isAdmin) {
+  if (isAdmin && !item.isPendingRequest) {
     libModalEdit.classList.remove('hidden');
   } else {
     libModalEdit.classList.add('hidden');
+  }
+
+  // Pending requests Banner & Actions
+  const pendingBanner = document.getElementById('lib-modal-pending-banner');
+  const pendingActions = document.getElementById('lib-modal-pending-actions');
+  const copyBtn = document.getElementById('lib-modal-copy');
+  
+  if (item.isPendingRequest) {
+    if (pendingBanner) {
+      pendingBanner.classList.remove('hidden');
+      const authorInfo = document.getElementById('lib-modal-pending-author-info');
+      if (authorInfo) {
+        authorInfo.innerHTML = `유저 <strong>${item.author || 'GST'}</strong> 님이 요청한 프롬프트입니다. 아래 버튼으로 게시하거나 거절해 주세요.`;
+      }
+    }
+    if (pendingActions && isAdmin) {
+      pendingActions.classList.remove('hidden');
+    }
+    if (copyBtn) {
+      copyBtn.classList.add('hidden');
+    }
+  } else {
+    if (pendingBanner) pendingBanner.classList.add('hidden');
+    if (pendingActions) pendingActions.classList.add('hidden');
+    if (copyBtn) copyBtn.classList.remove('hidden');
   }
 
   // Reset edit mode
@@ -2203,7 +2303,9 @@ if (lightboxEl && lightboxClose) {
 }
 
 function enterEditMode() {
-  if (!isAdmin || !libEditingItem) return;
+  if (!libEditingItem) return;
+  const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
+  if (!isAdmin && !isNewCustom) return;
   libEditMode = true;
   libEditActiveLang = 'ko'; // Default edit tab is Korean
 
@@ -2321,7 +2423,7 @@ async function saveEdit() {
     }
   }
   
-  saveLibraryOverride(libEditingItem.id, { 
+  const overrideData = {
     prompt: newPrompt,
     promptKo: newPromptKo,
     promptEn: newPromptEn,
@@ -2332,11 +2434,24 @@ async function saveEdit() {
     images: libEditingItem.images || [],
     thumbnails: libEditingItem.thumbnails || [],
     isReferenceType: libEditingItem.isReferenceType || false
-  });
+  };
 
-  const existing = libraryData.find(d => d.id === libEditingItem.id);
-  if (!existing) {
-    libraryData.push(libEditingItem);
+  if (isAdmin) {
+    saveLibraryOverride(libEditingItem.id, overrideData);
+
+    const existing = libraryData.find(d => d.id === libEditingItem.id);
+    if (!existing) {
+      libraryData.push(libEditingItem);
+    }
+  } else {
+    // Normal user: Save request to Firestore
+    db.collection('library_requests').doc(libEditingItem.id).set({
+      ...overrideData,
+      author: (currentUser && currentUser.id) ? currentUser.id.toUpperCase() : 'GST',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => {
+      console.warn('Failed to save request to Firestore:', err);
+    });
   }
 
   // Update display
@@ -2353,12 +2468,13 @@ async function saveEdit() {
   // Delightful "Saved" animation on the save button
   const saveBtn = document.getElementById('lib-modal-save');
   const originalHtml = saveBtn.innerHTML;
-  saveBtn.innerHTML = '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 저장됨</span>';
+  saveBtn.innerHTML = isAdmin 
+    ? '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 저장됨</span>'
+    : '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 요청됨</span>';
   saveBtn.style.background = '#34c759'; // Premium success green
   saveBtn.style.color = '#fff';
   saveBtn.style.borderColor = '#34c759';
   saveBtn.disabled = true;
-
 
   setTimeout(function() {
     // Restore button styles
@@ -2368,9 +2484,15 @@ async function saveEdit() {
     saveBtn.style.borderColor = '';
     saveBtn.disabled = false;
     
-    exitEditMode();
-    renderLibrary();
-    showToast('프롬프트가 저장되었습니다');
+    if (isAdmin) {
+      exitEditMode();
+      renderLibrary();
+      showToast('프롬프트가 저장되었습니다');
+    } else {
+      closeLibModal();
+      renderLibrary();
+      showToast('프롬프트 추가 요청이 전송되었습니다. 관리자 승인 후 게시됩니다.');
+    }
   }, 800);
 }
 
@@ -2393,6 +2515,66 @@ libModalEdit.addEventListener('click', enterEditMode);
 libModalCancel.addEventListener('click', exitEditMode);
 libModalSave.addEventListener('click', saveEdit);
 
+const libModalApprove = document.getElementById('lib-modal-approve');
+const libModalDecline = document.getElementById('lib-modal-decline');
+
+if (libModalApprove) {
+  libModalApprove.addEventListener('click', function() {
+    if (!libEditingItem || !libEditingItem.isPendingRequest) return;
+    if (!isAdmin) return;
+    
+    if (confirm('이 프롬프트를 승인하고 라이브러리에 실제 게시하시겠습니까?')) {
+      const dataToSave = {
+        prompt: libEditingItem.prompt || '',
+        promptKo: libEditingItem.promptKo || '',
+        promptEn: libEditingItem.promptEn || '',
+        title: libEditingItem.title || '',
+        desc: libEditingItem.desc || '',
+        category: libEditingItem.category || '기타',
+        tags: libEditingItem.tags || ['기타'],
+        images: libEditingItem.images || [],
+        thumbnails: libEditingItem.thumbnails || [],
+        isReferenceType: libEditingItem.isReferenceType || false
+      };
+      
+      // 1. Save to library overrides
+      saveLibraryOverride(libEditingItem.id, dataToSave);
+      
+      // 2. Delete from library_requests
+      db.collection('library_requests').doc(libEditingItem.id).delete()
+        .then(() => {
+          showToast('성공적으로 라이브러리에 게시되었습니다!');
+          closeLibModal();
+          renderLibrary();
+        })
+        .catch(err => {
+          console.warn('Failed to delete request:', err);
+          showToast('게시에 실패했습니다. 다시 시도해 주세요.');
+        });
+    }
+  });
+}
+
+if (libModalDecline) {
+  libModalDecline.addEventListener('click', function() {
+    if (!libEditingItem || !libEditingItem.isPendingRequest) return;
+    if (!isAdmin) return;
+    
+    if (confirm('이 프롬프트 추가 요청을 거절하고 삭제하시겠습니까?')) {
+      db.collection('library_requests').doc(libEditingItem.id).delete()
+        .then(() => {
+          showToast('요청이 거절 및 삭제되었습니다.');
+          closeLibModal();
+          renderLibrary();
+        })
+        .catch(err => {
+          console.warn('Failed to delete request:', err);
+          showToast('삭제에 실패했습니다. 다시 시도해 주세요.');
+        });
+    }
+  });
+}
+
 // Add custom prompt creation
 const libAddBtn = document.getElementById('lib-add-btn');
 const typeModal = document.getElementById('lib-type-modal');
@@ -2403,7 +2585,10 @@ const btnTypeReference = document.getElementById('btn-type-reference');
 if (libAddBtn) {
   libAddBtn.addEventListener('click', function(e) {
     e.stopPropagation();
-    if (!isAdmin) return;
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
     
     typeModal.classList.remove('hidden');
     typeModal.setAttribute('aria-hidden', 'false');
@@ -2981,6 +3166,7 @@ setInterval(function () {
 // --- Init ---
 loadLibraryOverrides();
 startLibraryOverridesListener();
+startLibraryRequestsListener();
 restoreSession();
 startListener();
 setView('float');
