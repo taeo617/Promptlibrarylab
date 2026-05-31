@@ -185,7 +185,7 @@ body {
   padding: 16px 18px;
   border-radius: var(--r-xl);
   width: fit-content;
-  max-width: 15em;
+  max-width: 90vw;
   min-width: 40px;
   min-height: 50px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.4) 100%);
@@ -205,7 +205,7 @@ body {
 
 @media (max-width: 768px) {
   .bubble {
-    max-width: 15em !important;
+    max-width: 90vw !important;
     height: auto !important;
     padding: 12px;
     resize: none !important;
