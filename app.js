@@ -1604,7 +1604,7 @@ function submitPrompt() {
   textarea.focus();
   
   if (isPending) {
-    showToast('승인 대기 상태로 전송되었습니다.');
+    showToast('로그인 또는 관리자에게 승인 후 게시 가능합니다');
   }
 }
 
@@ -3219,16 +3219,7 @@ textarea.addEventListener('keydown', function (e) {
   }
 });
 
-// --- Also gate textarea focus ---
-textarea.addEventListener('focus', function() {
-  if (!isLoggedIn) {
-    this.blur();
-    openLoginModal(function() {
-      textarea.focus();
-    });
-  }
-});
-
+// Removed textarea focus auth gate to allow non-logged-in users to type.
 // --- Setup Search input and Layout Mode togglers ---
 const globalSearchInput = document.getElementById('global-search-input');
 if (globalSearchInput) {
