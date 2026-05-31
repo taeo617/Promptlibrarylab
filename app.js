@@ -1907,25 +1907,15 @@ function renderLibrary() {
     card.dataset.id = item.id;
 
     let thumbHtml = '';
-    // If it's a Reference type with 3 images, use images[0] and images[2] for Before/After slider
-    if (item.images && item.images.length === 3 && item.isReferenceType) {
+    // If it has at least 2 images, use them for Before/After slider regardless of type
+    if (item.images && item.images.length >= 2) {
+      let beforeImg = item.images[0];
+      let afterImg = item.images.length === 3 ? item.images[2] : item.images[1];
       thumbHtml = `
         <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
-          <img src="${item.images[2]}" alt="After" class="slider-after" />
+          <img src="${afterImg}" alt="After" class="slider-after" />
           <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
-            <img src="${item.images[0]}" alt="Before" class="slider-before" />
-          </div>
-          <div class="slider-handle" style="left: 50%;"></div>
-        </div>
-      `;
-    } 
-    // If exactly 2 images are uploaded (normal before/after), use them for slider
-    else if (item.images && item.images.length === 2 && !item.isReferenceType) {
-      thumbHtml = `
-        <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
-          <img src="${item.images[1]}" alt="After" class="slider-after" />
-          <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
-            <img src="${item.images[0]}" alt="Before" class="slider-before" />
+            <img src="${beforeImg}" alt="Before" class="slider-before" />
           </div>
           <div class="slider-handle" style="left: 50%;"></div>
         </div>
@@ -3078,6 +3068,7 @@ function setView(v) {
   if (v === currentView) return;
 
   currentView = v;
+  localStorage.setItem('pl_current_view', v);
   navFloat.classList.toggle('is-active', v === 'float');
   if (navList) navList.classList.toggle('is-active', v === 'list');
   navLibrary.classList.toggle('is-active', v === 'library');
@@ -3281,7 +3272,7 @@ startLibraryOverridesListener();
 startLibraryRequestsListener();
 restoreSession();
 startListener();
-setView('float');
+setView(localStorage.getItem('pl_current_view') || 'float');
 
 // Global event to auto-save and blur editable list items when clicking outside
 document.addEventListener('pointerdown', function(e) {
