@@ -1356,7 +1356,7 @@ function renderFloat() {
 
   const r = canvas.getBoundingClientRect();
   const currentAuthor = localStorage.getItem('pl_author') || '';
-  const show = prompts.slice(0, 25);
+  const show = prompts.filter(p => isAdmin || !p.isPending || (p.author === currentAuthor && currentAuthor !== '')).slice(0, 25);
   const showIds = new Set(show.map(p => p.id));
 
   // Remove old bubbles
@@ -1510,6 +1510,8 @@ function renderList() {
   const currentAuthor = localStorage.getItem('pl_author') || '';
   if (sortOrder === 'my') {
     sorted = sorted.filter(p => p.author === currentAuthor && currentAuthor !== '');
+  } else {
+    sorted = sorted.filter(p => isAdmin || !p.isPending || (p.author === currentAuthor && currentAuthor !== ''));
   }
   
   if (isAdmin && selectedAuthorFilter) {
@@ -1895,7 +1897,7 @@ function submitPrompt() {
     localStorage.removeItem('pl_author');
   }
 
-  const isPending = false;
+  const isPending = !isLoggedIn; // 비로그인 시 대기 상태로
 
   db.collection('prompts').add({
     text: text,
@@ -1913,6 +1915,10 @@ function submitPrompt() {
   textarea.style.height = 'auto';
   submitBtn.disabled = true;
   textarea.focus();
+  
+  if (isPending) {
+    showToast('로그인 또는 관리자에게 승인 후 게시 가능합니다');
+  }
 }
 
 // --- Library Data ---
@@ -2846,11 +2852,22 @@ async function saveEdit() {
     isReferenceType: libEditingItem.isReferenceType || false
   };
 
-  saveLibraryOverride(libEditingItem.id, overrideData);
+  if (isAdmin) {
+    saveLibraryOverride(libEditingItem.id, overrideData);
 
-  const existing = libraryData.find(d => d.id === libEditingItem.id);
-  if (!existing) {
-    libraryData.push(libEditingItem);
+    const existing = libraryData.find(d => d.id === libEditingItem.id);
+    if (!existing) {
+      libraryData.push(libEditingItem);
+    }
+  } else {
+    // 일반 유저: Firestore의 library_requests 에 요청 저장
+    db.collection('library_requests').doc(libEditingItem.id).set({
+      ...overrideData,
+      author: (currentUser && currentUser.id) ? currentUser.id.toUpperCase() : 'GST',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(err => {
+      console.warn('Failed to save request to Firestore:', err);
+    });
   }
 
   // Update display
@@ -2883,9 +2900,15 @@ async function saveEdit() {
     saveBtn.style.borderColor = '';
     saveBtn.disabled = false;
     
-    exitEditMode();
-    renderLibrary();
-    showToast('프롬프트가 저장되었습니다');
+    if (isAdmin) {
+      exitEditMode();
+      renderLibrary();
+      showToast('프롬프트가 저장되었습니다');
+    } else {
+      closeLibModal();
+      renderLibrary();
+      showToast('프롬프트 추가 요청이 전송되었습니다. 관리자 승인 후 게시됩니다.');
+    }
   }, 800);
 }
 
