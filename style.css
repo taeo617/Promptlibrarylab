@@ -72,6 +72,46 @@ body {
 }
 
 /* ============================================
+   PROFILE IMAGES
+   ============================================ */
+.profile-img-badge {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-img-bubble {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.profile-img-list {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+/* ============================================
+   PROFILE MODAL
+   ============================================ */
+.profile-modal.is-open {
+  display: flex !important;
+  opacity: 1 !important;
+}
+
+.profile-modal.is-open .profile-modal__card {
+  transform: scale(1) !important;
+}
+
+
+/* ============================================
    PAGE
    ============================================ */
 .page {

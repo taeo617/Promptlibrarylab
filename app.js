@@ -53,6 +53,7 @@ let currentView = '';
 let sortOrder = 'newest';
 let unauthorizedClicksCount = 0;
 let selectedAuthorFilter = null;
+let userProfiles = {};
 
 // ============================================
 // AUTH SYSTEM
@@ -112,9 +113,19 @@ function updateAuthUI() {
   if (isLoggedIn) {
     navLoginBtn.classList.add('hidden');
     navUserInfo.classList.remove('hidden');
-    navUserBadge.textContent = currentUser.id.toUpperCase();
+    const uId = currentUser.id.toUpperCase();
+    if (userProfiles[uId]) {
+      navUserBadge.innerHTML = `<img src="${userProfiles[uId]}" class="profile-img-badge" alt="${uId}" />`;
+      navUserBadge.style.padding = '0';
+      navUserBadge.style.border = '1px solid rgba(0,0,0,0.1)';
+      navUserBadge.style.overflow = 'hidden';
+    } else {
+      navUserBadge.textContent = uId;
+      navUserBadge.style.padding = '';
+      navUserBadge.style.border = '';
+    }
     if (greetingEl) {
-      greetingEl.innerHTML = `${currentUser.id.toUpperCase()}님<br>환영합니다.`;
+      greetingEl.innerHTML = `${uId}님<br>환영합니다.`;
     }
     document.querySelectorAll('.is-blurred').forEach(el => el.classList.remove('is-blurred'));
   } else {
@@ -328,20 +339,18 @@ navLoginBtn.addEventListener('click', function() {
 });
 
 navUserBadge.addEventListener('click', function(e) {
-  if (window.innerWidth > 768) {
-    e.stopPropagation();
-    navLogoutBtn.classList.toggle('show');
-  }
+  e.stopPropagation();
+  if (typeof window.closeMobileMenu === 'function') window.closeMobileMenu();
+  openProfileModal();
 });
 
 document.addEventListener('click', function(e) {
   if (window.innerWidth > 768 && !navUserInfo.contains(e.target)) {
-    navLogoutBtn.classList.remove('show');
+    // navLogoutBtn no longer used for toggle
   }
 });
 
 navLogoutBtn.addEventListener('click', function() {
-  navLogoutBtn.classList.remove('show');
   logout();
 });
 
@@ -357,6 +366,145 @@ loginPwInput.addEventListener('keydown', function(e) {
 loginIdInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') loginPwInput.focus();
 });
+
+// --- Profile Modal & Sync ---
+const profileModal = document.getElementById('profile-modal');
+const profileModalBackdrop = document.getElementById('profile-modal-backdrop');
+const profileModalClose = document.getElementById('profile-modal-close');
+const profileAvatar = document.getElementById('profile-modal-avatar');
+const profileInput = document.getElementById('profile-image-input');
+const profileBtnAdd = document.getElementById('profile-btn-add');
+const profileBtnDelete = document.getElementById('profile-btn-delete');
+const profileBtnLogout = document.getElementById('profile-btn-logout');
+
+function startUserProfileListener() {
+  db.collection('users').onSnapshot(function(snapshot) {
+    snapshot.forEach(function(doc) {
+      userProfiles[doc.id] = doc.data().profileImage;
+    });
+    updateAuthUI();
+    if (currentView === 'library') renderLibrary();
+    if (currentView === 'float' && !window.location.hash.includes('list')) {
+      // Re-render bubbles? Usually they are rendered once. We could update DOM directly.
+      document.querySelectorAll('.bubble-wrapper').forEach(el => {
+        const pId = el.dataset.id;
+        const p = prompts.find(pr => pr.id === pId);
+        if (p && p.author) {
+          const authorEl = el.querySelector('.bubble__author');
+          if (authorEl && userProfiles[p.author.toUpperCase()]) {
+            if (!authorEl.querySelector('.profile-img-bubble')) {
+              authorEl.innerHTML = `<img src="${userProfiles[p.author.toUpperCase()]}" class="profile-img-bubble" />` + p.author + (p.isPending ? ' <span style="color:#ff3b30; font-size:9px; border:1px solid #ff3b30; padding:1px 4px; border-radius:10px; margin-left:4px;">대기중</span>' : '');
+            } else {
+              authorEl.querySelector('.profile-img-bubble').src = userProfiles[p.author.toUpperCase()];
+            }
+          }
+        }
+      });
+    }
+  });
+}
+startUserProfileListener();
+
+function openProfileModal() {
+  if (!isLoggedIn) return;
+  const uId = currentUser.id.toUpperCase();
+  if (userProfiles[uId]) {
+    profileAvatar.innerHTML = `<img src="${userProfiles[uId]}" style="width:100%; height:100%; object-fit:cover;" />`;
+    profileBtnDelete.classList.remove('hidden');
+    profileBtnAdd.textContent = '프로필 이미지 변경';
+  } else {
+    profileAvatar.innerHTML = uId;
+    profileBtnDelete.classList.add('hidden');
+    profileBtnAdd.textContent = '프로필 이미지 설정';
+  }
+  
+  profileModal.style.display = 'flex';
+  // Trigger reflow
+  profileModal.offsetHeight;
+  profileModal.classList.add('is-open');
+  profileModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfileModal() {
+  profileModal.classList.remove('is-open');
+  profileModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  setTimeout(() => { profileModal.style.display = 'none'; }, 200);
+}
+
+profileModalBackdrop.addEventListener('click', closeProfileModal);
+profileModalClose.addEventListener('click', closeProfileModal);
+
+profileBtnLogout.addEventListener('click', () => {
+  closeProfileModal();
+  logout();
+});
+
+profileBtnAdd.addEventListener('click', () => {
+  profileInput.click();
+});
+
+profileBtnDelete.addEventListener('click', () => {
+  if (!isLoggedIn) return;
+  const uId = currentUser.id.toUpperCase();
+  db.collection('users').doc(uId).delete().then(() => {
+    delete userProfiles[uId];
+    showToast('프로필 이미지가 삭제되었습니다.');
+    closeProfileModal();
+  }).catch(e => showToast('삭제 실패: ' + e.message));
+});
+
+profileInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  // Directly read as base64 and save without 4:3 crop to preserve original aspect ratio
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const dataUrl = event.target.result;
+    
+    // Simple resize to prevent exceeding Firestore 1MB limit, while maintaining aspect ratio
+    const img = new Image();
+    img.onload = function() {
+      const cvs = document.createElement('canvas');
+      const maxDim = 800; // max dimension to keep size reasonable
+      let w = img.width;
+      let h = img.height;
+      
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.floor(h * (maxDim / w));
+          w = maxDim;
+        } else {
+          w = Math.floor(w * (maxDim / h));
+          h = maxDim;
+        }
+      }
+      
+      cvs.width = w;
+      cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      const resizedDataUrl = cvs.toDataURL('image/jpeg', 0.85);
+      
+      const uId = currentUser.id.toUpperCase();
+      db.collection('users').doc(uId).set({ profileImage: resizedDataUrl }, { merge: true })
+        .then(() => {
+          showToast('프로필 이미지가 업데이트되었습니다.');
+          closeProfileModal();
+        })
+        .catch(e => {
+          showToast('이미지가 너무 크거나 업로드에 실패했습니다.');
+          console.error(e);
+        });
+    };
+    img.src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+});
+
 
 // --- Toast ---
 function showToast(msg) {
@@ -695,9 +843,15 @@ function mkBubble(p, x, y, enter) {
       '</div>';
   }
 
+  let authorHtml = '';
+  if (a) {
+    let profileImg = (p.author && userProfiles[p.author.toUpperCase()]) ? `<img src="${userProfiles[p.author.toUpperCase()]}" class="profile-img-bubble" />` : '';
+    authorHtml = '<p class="bubble__author">' + profileImg + a + (p.isPending ? ' <span style="color:#ff3b30; font-size:9px; border:1px solid #ff3b30; padding:1px 4px; border-radius:10px; margin-left:4px;">대기중</span>' : '') + '</p>';
+  }
+
   el.innerHTML =
     `<div class="bubble" style="${widthStyle}">` +
-      (a ? '<p class="bubble__author">' + a + (p.isPending ? ' <span style="color:#ff3b30; font-size:9px; border:1px solid #ff3b30; padding:1px 4px; border-radius:10px; margin-left:4px;">대기중</span>' : '') + '</p>' : '') +
+      authorHtml +
       '<p class="bubble__text">' + escHtml(p.text) + '</p>' +
       pendingActions +
     '</div>' +
@@ -1304,10 +1458,17 @@ function renderList() {
         '</div>';
     }
 
+    let authorDisplay = a;
+    let authorStyle = '';
+    if (p.author && userProfiles[p.author.toUpperCase()]) {
+      authorDisplay = `<img src="${userProfiles[p.author.toUpperCase()]}" class="profile-img-list" alt="${a}" />`;
+      authorStyle = 'padding:0; overflow:hidden; border:1px solid rgba(0,0,0,0.1);';
+    }
+
     item.innerHTML =
       badgeHtml +
       '<div style="display:flex; width:100%; gap:var(--sp-md);">' +
-        '<div class="list-item__author">' + a + '</div>' +
+        `<div class="list-item__author" style="${authorStyle}">` + authorDisplay + '</div>' +
         '<div class="list-item__body">' +
           '<p class="list-item__text">' + pendingBadge + escHtml(p.text) + '</p>' +
           '<p class="list-item__time">' + fmtTime(p.time) + '</p>' +
@@ -2019,9 +2180,13 @@ function renderLibrary() {
         card.style.background = '';
       }
 
+      let reqAuthorDisplay = `요청자: ${item.author || 'GST'}`;
+      if (item.author && userProfiles[item.author.toUpperCase()]) {
+        reqAuthorDisplay = `<img src="${userProfiles[item.author.toUpperCase()]}" class="profile-img-bubble" /> ${item.author}`;
+      }
       const copyArea = item.isPendingRequest 
         ? (isAdmin 
-            ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600;">요청자: ${item.author || 'GST'}</span>`
+            ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600;">${reqAuthorDisplay}</span>`
             : `<span style="font-size: 11.5px; color: #ff9500; font-weight: 600;">검토 대기 중</span>`)
         : `<button class="lib-card__copy" data-id="${item.id}" aria-label="복사" style="padding: 4px 10px; font-size: 11px;">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
@@ -2060,9 +2225,13 @@ function renderLibrary() {
         card.style.background = '';
       }
 
+      let reqAuthorDisplayGrid = `요청자: ${item.author || 'GST'}`;
+      if (item.author && userProfiles[item.author.toUpperCase()]) {
+        reqAuthorDisplayGrid = `<img src="${userProfiles[item.author.toUpperCase()]}" class="profile-img-bubble" /> ${item.author}`;
+      }
       const copyArea = item.isPendingRequest 
         ? (isAdmin 
-            ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600; text-align: left;">요청자: ${item.author || 'GST'}</span>`
+            ? `<span style="font-size: 11.5px; color: #ff3b30; font-weight: 600; text-align: left;">${reqAuthorDisplayGrid}</span>`
             : `<span style="font-size: 11.5px; color: #ff9500; font-weight: 600; text-align: left;">검토 대기 중</span>`)
         : `<button class="lib-card__copy" data-id="${item.id}" aria-label="복사">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사

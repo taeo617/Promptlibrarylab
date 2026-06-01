@@ -201,6 +201,27 @@
     </div>
   </div>
 
+  <!-- Profile Modal -->
+  <div class="profile-modal" id="profile-modal" aria-hidden="true" style="position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
+    <div class="profile-modal__backdrop" id="profile-modal-backdrop" style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"></div>
+    <div class="profile-modal__card" style="position: relative; background: #fff; width: 90%; max-width: 360px; border-radius: var(--r-xl); padding: var(--sp-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; transform: scale(0.95); transition: transform 0.2s;">
+      <button class="profile-modal__close" id="profile-modal-close" aria-label="닫기" style="position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: none; background: transparent; color: #888; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div class="profile-modal__avatar" id="profile-modal-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: #f0f0f5; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; color: #555; overflow: hidden; border: 2px solid rgba(0,0,0,0.05); position: relative;">
+        <!-- Avatar img or initials will go here -->
+      </div>
+      <h2 class="profile-modal__title" id="profile-modal-title" style="margin: 0 0 24px; font-size: 20px; font-weight: 700; color: var(--color-ink);">마이페이지</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="file" id="profile-image-input" accept="image/*" style="display: none;" />
+        <button id="profile-btn-add" style="padding: 14px; background: #FFF1BC; border: none; border-radius: var(--r-md); font-size: 14px; font-weight: 600; color: #333; cursor: pointer; transition: all 0.2s;">프로필 이미지 설정/변경</button>
+        <button id="profile-btn-delete" class="hidden" style="padding: 14px; background: #fff; border: 1px solid rgba(255, 59, 48, 0.3); border-radius: var(--r-md); font-size: 14px; font-weight: 600; color: #ff3b30; cursor: pointer; transition: all 0.2s;">프로필 이미지 삭제</button>
+        <button id="profile-btn-logout" style="padding: 14px; background: #f5f5f7; border: none; border-radius: var(--r-md); font-size: 14px; font-weight: 600; color: #555; cursor: pointer; transition: all 0.2s; margin-top: 8px;">로그아웃</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Prompt Type Selection Modal -->
   <div class="lib-type-modal hidden" id="lib-type-modal" aria-hidden="true" style="position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;">
     <div class="lib-type-modal__backdrop" id="lib-type-modal-backdrop" style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"></div>
