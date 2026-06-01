@@ -1563,7 +1563,15 @@ function renderList() {
     }
 
     const isAuthorSelected = selectedAuthorFilter === a;
-    const authorHtml = a ? getUserDisplay(a) : '';
+    let authorHtml = '';
+    if (a) {
+      const imgSrc = getAvatarSrc(a);
+      if (imgSrc) {
+        authorHtml = `<img src="${imgSrc}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="${a}" />`;
+      } else {
+        authorHtml = a;
+      }
+    }
 
     item.innerHTML =
       badgeHtml +
@@ -1917,7 +1925,7 @@ function submitPrompt() {
   textarea.focus();
   
   if (isPending) {
-    showToast('로그인 또는 관리자에게 승인 후 게시 가능합니다');
+    showToast('로그인 혹은 관리자의 승인이 필요합니다');
   }
 }
 
