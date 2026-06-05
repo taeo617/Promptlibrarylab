@@ -58,6 +58,7 @@ let userProfiles = {};
 // Default profiles from foundfoundedmeet
 const FF_MEMBERS = {
   "TY": { name: "김태영", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_taeyoung.png" },
+  "태영": { name: "김태영", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_taeyoung.png" },
   "JW": { name: "곽진우", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_jinwoo.png" },
   "DE": { name: "권다은", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_daeun.png" },
   "KS": { name: "남경선", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_kyungsun.png" },
@@ -79,7 +80,7 @@ function getUserDisplay(initials) {
   const uploadedImg = userProfiles[u];
   const ff = FF_MEMBERS[u];
   
-  const imgSrc = uploadedImg ? uploadedImg : (ff ? ff.img : null);
+  const imgSrc = (ff && ff.img) ? ff.img : (uploadedImg ? uploadedImg : null);
   
   if (ff) {
     return `
@@ -109,9 +110,9 @@ function getUserDisplay(initials) {
 
 function getAvatarSrc(initials) {
   const u = initials ? initials.toUpperCase() : '';
-  const uploadedImg = userProfiles[u];
   const ff = FF_MEMBERS[u];
-  return uploadedImg ? uploadedImg : (ff ? ff.img : null);
+  const uploadedImg = userProfiles[u];
+  return (ff && ff.img) ? ff.img : (uploadedImg ? uploadedImg : null);
 }
 
 // ============================================
@@ -179,18 +180,21 @@ function updateAuthUI() {
       navUserBadge.style.padding = '';
       navUserBadge.style.border = '';
       navUserBadge.style.overflow = '';
-    } else if (userProfiles[uId]) {
-      navUserBadge.innerHTML = `<img src="${userProfiles[uId]}" class="profile-img-badge" alt="${uId}" />`;
-      navUserBadge.style.padding = '0';
-      navUserBadge.style.border = '1px solid rgba(0,0,0,0.1)';
-      navUserBadge.style.overflow = 'hidden';
-      navUserBadge.classList.remove('is-admin-badge');
     } else {
-      navUserBadge.textContent = uId;
-      navUserBadge.style.padding = '';
-      navUserBadge.style.border = '';
-      navUserBadge.style.overflow = '';
-      navUserBadge.classList.remove('is-admin-badge');
+      const avatarSrc = getAvatarSrc(uId);
+      if (avatarSrc) {
+        navUserBadge.innerHTML = `<img src="${avatarSrc}" class="profile-img-badge" alt="${uId}" />`;
+        navUserBadge.style.padding = '0';
+        navUserBadge.style.border = '1px solid rgba(0,0,0,0.1)';
+        navUserBadge.style.overflow = 'hidden';
+        navUserBadge.classList.remove('is-admin-badge');
+      } else {
+        navUserBadge.textContent = uId;
+        navUserBadge.style.padding = '';
+        navUserBadge.style.border = '';
+        navUserBadge.style.overflow = '';
+        navUserBadge.classList.remove('is-admin-badge');
+      }
     }
     if (greetingEl) {
       greetingEl.innerHTML = `${uId}님<br>환영합니다.`;
