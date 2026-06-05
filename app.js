@@ -57,22 +57,87 @@ let userProfiles = {};
 
 // Default profiles from foundfoundedmeet
 const FF_MEMBERS = {
+  // 김태영 (TY)
   "TY": { name: "김태영", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_taeyoung.png" },
+  "김태영": { name: "김태영", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_taeyoung.png" },
   "태영": { name: "김태영", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_taeyoung.png" },
+
+  // 곽진우 (JW)
   "JW": { name: "곽진우", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_jinwoo.png" },
+  "곽진우": { name: "곽진우", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_jinwoo.png" },
+  "진우": { name: "곽진우", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_jinwoo.png" },
+
+  // 권다은 (DE)
   "DE": { name: "권다은", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_daeun.png" },
+  "권다은": { name: "권다은", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_daeun.png" },
+  "다은": { name: "권다은", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_daeun.png" },
+
+  // 남경선 (KS)
   "KS": { name: "남경선", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_kyungsun.png" },
+  "남경선": { name: "남경선", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_kyungsun.png" },
+  "경선": { name: "남경선", role: "디자이너", team: "파운드/파운디드 ID", img: "avatar_kyungsun.png" },
+
+  // 신유진 (YJ)
   "YJ": { name: "신유진", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_yujin.png" },
+  "신유진": { name: "신유진", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_yujin.png" },
+  "유진": { name: "신유진", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_yujin.png" },
+
+  // 신준범 (JB)
   "JB": { name: "신준범", role: "프리랜서 디자이너", team: "파운드/파운디드 ID", img: "avatar_junbeom.png" },
+  "신준범": { name: "신준범", role: "프리랜서 디자이너", team: "파운드/파운디드 ID", img: "avatar_junbeom.png" },
+  "준범": { name: "신준범", role: "프리랜서 디자이너", team: "파운드/파운디드 ID", img: "avatar_junbeom.png" },
+
+  // 신현열 (HY)
   "HY": { name: "신현열", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_hyunyeol.png" },
+  "신현열": { name: "신현열", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_hyunyeol.png" },
+  "현열": { name: "신현열", role: "시니어 디자이너", team: "파운드/파운디드 ID", img: "avatar_hyunyeol.png" },
+
+  // 윤정수 (JS)
   "JS": { name: "윤정수", role: "인턴", team: "파운드/파운디드 ID", img: "avatar_jungsoo.png" },
-  "CG": { name: "김춘구", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" }, 
+  "윤정수": { name: "윤정수", role: "인턴", team: "파운드/파운디드 ID", img: "avatar_jungsoo.png" },
+  "정수": { name: "윤정수", role: "인턴", team: "파운드/파운디드 ID", img: "avatar_jungsoo.png" },
+
+  // 김춘구 (CG / BOA)
+  "CG": { name: "김춘구", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" },
+  "김춘구": { name: "김춘구", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" },
+  "춘구": { name: "김춘구", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" },
+  "BOA": { name: "보아", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" },
+  "보아": { name: "보아", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_boa.png" },
+
+  // 송규호 (GH)
   "GH": { name: "송규호", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_gyuho.png" },
+  "송규호": { name: "송규호", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_gyuho.png" },
+  "규호": { name: "송규호", role: "디렉터", team: "파운드/파운디드 ID", img: "avatar_gyuho.png" },
+
+  // 김도영 (DY)
   "DY": { name: "김도영", role: "인턴", team: "파운드/파운디드 VD", img: "avatar_doyoung.png" },
+  "김도영": { name: "김도영", role: "인턴", team: "파운드/파운디드 VD", img: "avatar_doyoung.png" },
+  "도영": { name: "김도영", role: "인턴", team: "파운드/파운디드 VD", img: "avatar_doyoung.png" },
+
+  // 안혜경 (HK)
   "HK": { name: "안혜경", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_hyekyung.png" },
+  "안혜경": { name: "안혜경", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_hyekyung.png" },
+  "혜경": { name: "안혜경", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_hyekyung.png" },
+
+  // 여지민 (JM)
   "JM": { name: "여지민", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jimin.png" },
+  "여지민": { name: "여지민", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jimin.png" },
+  "지민": { name: "여지민", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jimin.png" },
+
+  // 안수현 (SH)
   "SH": { name: "안수현", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_suhyun.png" },
+  "안수현": { name: "안수현", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_suhyun.png" },
+  "수현": { name: "안수현", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_suhyun.png" },
+
+  // oxo (OX)
   "OX": { name: "oxo", role: "디렉터", team: "파운드/파운디드 VD", img: "avatar_oxo.png" },
+  "oxo": { name: "oxo", role: "디렉터", team: "파운드/파운디드 VD", img: "avatar_oxo.png" },
+  "OXO": { name: "oxo", role: "디렉터", team: "파운드/파운디드 VD", img: "avatar_oxo.png" },
+
+  // 정우 (avatar_jungoo.png)
+  "정우": { name: "정우", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jungoo.png" },
+  "JUNGOO": { name: "정우", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jungoo.png" },
+  "jungoo": { name: "정우", role: "디자이너", team: "파운드/파운디드 VD", img: "avatar_jungoo.png" }
 };
 
 function getUserDisplay(initials) {
