@@ -430,12 +430,6 @@
     </div>
   </div>
 
-  <!-- Firebase SDK (compat mode for file:// support) -->
-  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore-compat.js"></script>
-  <script src="app.js?v=2.0"></script>
-
   <!-- Fullscreen Lightbox Image Viewer -->
   <div id="lib-lightbox"
     style="position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;">
@@ -454,6 +448,7 @@
     <img id="lib-lightbox-img"
       style="max-width: 92%; max-height: 88%; object-fit: contain; border-radius: var(--r-md); box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease;" />
   </div>
+
   <!-- User Management Modal -->
   <div class="profile-modal" id="user-mgmt-modal" aria-hidden="true" style="position: fixed; inset: 0; z-index: 2000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
     <div class="profile-modal__backdrop" id="user-mgmt-modal-backdrop" style="position: absolute; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);"></div>
@@ -468,6 +463,12 @@
       </div>
     </div>
   </div>
+
+  <!-- Firebase SDK (compat mode for file:// support) -->
+  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore-compat.js"></script>
+  <script src="app.js?v=2.0"></script>
 </body>
 
 </html>
