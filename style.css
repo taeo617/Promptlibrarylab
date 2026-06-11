@@ -2640,6 +2640,18 @@ body.is-admin .delete-btn--list {
 }
 
 /* User Management View Page styling */
+.usermgmt-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--color-canvas);
+}
+
+.usermgmt-view.hidden {
+  display: none !important;
+}
+
 .usermgmt-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

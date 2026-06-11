@@ -3865,8 +3865,8 @@ window.closeMobileMenu = function() {
   if (globalNavRight) globalNavRight.classList.remove('is-open');
   if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('is-open');
   
-  // Restore input bar when closing mobile menu, unless in library view
-  if (inputBar && typeof currentView !== 'undefined' && currentView !== 'library') {
+  // Restore input bar when closing mobile menu, unless in library view or usermgmt view
+  if (inputBar && typeof currentView !== 'undefined' && currentView !== 'library' && currentView !== 'usermgmt') {
     inputBar.classList.remove('hidden');
   }
 };
@@ -3881,7 +3881,7 @@ if (mobileMenuBtn && mobileMenuOverlay) {
       if (isOpen) {
         inputBar.classList.add('hidden');
       } else {
-        if (typeof currentView !== 'undefined' && currentView !== 'library') {
+        if (typeof currentView !== 'undefined' && currentView !== 'library' && currentView !== 'usermgmt') {
           inputBar.classList.remove('hidden');
         }
       }
