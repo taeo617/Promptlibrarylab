@@ -45,6 +45,7 @@ const submitBtn = document.getElementById('submit-btn');
 const navFloat = document.getElementById('nav-float');
 const navList = document.getElementById('nav-list');
 const navLibrary = document.getElementById('nav-library');
+const navUsermgmt = document.getElementById('nav-usermgmt');
 const filterNewest = document.getElementById('filter-newest');
 const filterOldest = document.getElementById('filter-oldest');
 
@@ -315,6 +316,15 @@ function updateAuthUI() {
       userMgmtBtn.classList.remove('hidden');
     } else {
       userMgmtBtn.classList.add('hidden');
+    }
+  }
+
+  const navUserMgmt = document.getElementById('nav-usermgmt');
+  if (navUserMgmt) {
+    if (isLoggedIn && isAdmin) {
+      navUserMgmt.classList.remove('hidden');
+    } else {
+      navUserMgmt.classList.add('hidden');
     }
   }
 
@@ -3792,11 +3802,17 @@ const inputBar = document.getElementById('input-bar');
 function setView(v) {
   if (v === currentView) return;
 
+  window.scrollTo(0, 0);
+
   currentView = v;
   localStorage.setItem('pl_current_view', v);
   navFloat.classList.toggle('is-active', v === 'float');
   if (navList) navList.classList.toggle('is-active', v === 'list');
   navLibrary.classList.toggle('is-active', v === 'library');
+  const navUserMgmt = document.getElementById('nav-usermgmt');
+  if (navUserMgmt) {
+    navUserMgmt.classList.toggle('is-active', v === 'usermgmt');
+  }
 
   canvas.classList.add('hidden');
   listView.classList.add('hidden');
@@ -3880,6 +3896,9 @@ if (navList) {
   navList.addEventListener('click', function () { setView('list'); closeMobileMenu(); });
 }
 navLibrary.addEventListener('click', function () { setView('library'); closeMobileMenu(); });
+if (navUsermgmt) {
+  navUsermgmt.addEventListener('click', function () { setView('usermgmt'); closeMobileMenu(); });
+}
 
 // Dashboard inner List View button
 const dashboardListBtn = document.getElementById('dashboard-list-btn');
