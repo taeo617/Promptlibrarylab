@@ -1065,7 +1065,8 @@ function loadLibraryOverrides() {
             images: data.images || [],
             thumbnails: data.thumbnails || [],
             originalImages: data.originalImages || [],
-            isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3)
+            isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3),
+            author: data.author || '김태영'
           };
           libraryData.push(item);
         } else {
@@ -1088,6 +1089,9 @@ function loadLibraryOverrides() {
           if (data.originalImages !== undefined) item.originalImages = data.originalImages;
           if (data.isReferenceType !== undefined) item.isReferenceType = data.isReferenceType;
           else if (data.images && data.images.length === 3) item.isReferenceType = true;
+          if (data.author !== undefined) {
+            item.author = data.author;
+          }
         }
       });
     }
@@ -1127,7 +1131,8 @@ function startLibraryOverridesListener() {
           images: data.images || [],
           thumbnails: data.thumbnails || [],
           originalImages: data.originalImages || [],
-          isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3)
+          isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3),
+          author: data.author || '김태영'
         };
         libraryData.push(item);
       } else {
@@ -1149,6 +1154,9 @@ function startLibraryOverridesListener() {
         if (data.originalImages !== undefined) item.originalImages = data.originalImages;
         if (data.isReferenceType !== undefined) item.isReferenceType = data.isReferenceType;
         else if (data.images && data.images.length === 3) item.isReferenceType = true;
+        if (data.author !== undefined) {
+          item.author = data.author;
+        }
       }
     });
     // Re-render library if active
@@ -3268,6 +3276,9 @@ async function saveEdit() {
     }
   }
   
+  const authorToSave = libEditingItem.author || (currentUser && currentUser.id ? currentUser.id.toUpperCase() : 'AD');
+  libEditingItem.author = authorToSave;
+  
   const overrideData = {
     prompt: newPrompt,
     promptKo: newPromptKo,
@@ -3278,7 +3289,8 @@ async function saveEdit() {
     tags: libEditingItem.tags,
     images: libEditingItem.images || [],
     thumbnails: libEditingItem.thumbnails || [],
-    isReferenceType: libEditingItem.isReferenceType || false
+    isReferenceType: libEditingItem.isReferenceType || false,
+    author: authorToSave
   };
 
   if (isAdmin) {
@@ -3379,7 +3391,8 @@ if (libModalApprove) {
         tags: libEditingItem.tags || ['기타'],
         images: libEditingItem.images || [],
         thumbnails: libEditingItem.thumbnails || [],
-        isReferenceType: libEditingItem.isReferenceType || false
+        isReferenceType: libEditingItem.isReferenceType || false,
+        author: libEditingItem.author || '김태영'
       };
       
       // 1. Save to library overrides
@@ -4089,7 +4102,7 @@ setTimeout(() => {
   if (typeof db !== 'undefined') {
     db.collection('library_overrides').get().then(snap => {
       snap.forEach(doc => {
-        if (doc.data().author !== '김태영') {
+        if (doc.data().author === undefined || doc.data().author === '') {
           doc.ref.update({ author: '김태영' }).catch(console.error);
         }
       });
