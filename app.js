@@ -951,8 +951,21 @@ function renderUserMgmtPage() {
     }
   }
 
-  // Sort uniqueStaff alphabetically by name
-  uniqueStaff.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+  // Sort uniqueStaff by Role, then Team, then Name
+  const roleOrder = { "디렉터": 1, "시니어 디자이너": 2, "디자이너": 3, "프리랜서 디자이너": 4, "인턴": 5 };
+  const teamOrder = { "파운드/파운디드 ID": 1, "파운드/파운디드 VD": 2 };
+  
+  uniqueStaff.sort((a, b) => {
+    const roleA = roleOrder[a.role] || 99;
+    const roleB = roleOrder[b.role] || 99;
+    if (roleA !== roleB) return roleA - roleB;
+    
+    const teamA = teamOrder[a.team] || 99;
+    const teamB = teamOrder[b.team] || 99;
+    if (teamA !== teamB) return teamA - teamB;
+    
+    return a.name.localeCompare(b.name, 'ko');
+  });
 
   uniqueStaff.forEach(s => {
     const div = document.createElement('div');
