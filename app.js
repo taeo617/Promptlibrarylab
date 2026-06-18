@@ -3387,23 +3387,10 @@ function enterEditMode() {
   document.getElementById('lib-modal-edit-tags').value = libEditingItem.tags ? libEditingItem.tags.join(', ') : '';
   
   let selectedProgs = libEditingItem.program ? libEditingItem.program.split(',').map(p => p.trim()).filter(Boolean) : [];
-  libEditingItem._tempPrograms = selectedProgs;
-  document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(pill => {
-    const isSelected = selectedProgs.includes(pill.dataset.program);
-    if (isSelected) {
-      pill.classList.add('is-active');
-      pill.style.background = '#FFF1BC';
-      pill.style.color = '#333';
-      pill.style.borderColor = 'transparent';
-      pill.style.fontWeight = '600';
-    } else {
-      pill.classList.remove('is-active');
-      pill.style.background = '#f5f5f7';
-      pill.style.color = '#555';
-      pill.style.borderColor = 'rgba(0,0,0,0.08)';
-      pill.style.fontWeight = '500';
-    }
-  });
+  document.getElementById('lib-modal-edit-program-input').value = selectedProgs.join(', ');
+  
+  // Set up dropdown items highlights
+  updateDropdownSelections();
   
   // Populate the bilingual textareas
   libModalEditTextareaKo.value = libEditingItem.promptKo || libEditingItem.prompt || '';
@@ -3479,9 +3466,11 @@ async function saveEdit() {
   }
   
   const newPrompt = newPromptEn || newPromptKo;
-  const newProgram = (libEditingItem._tempPrograms || []).join(', ');
+  const newProgramInputVal = document.getElementById('lib-modal-edit-program-input').value.trim();
+  const parsedProgs = newProgramInputVal ? newProgramInputVal.split(',').map(p => p.trim()).filter(Boolean) : [];
+  // Restrict to max 2 programs
+  const newProgram = parsedProgs.slice(0, 2).join(', ');
   libEditingItem.program = newProgram;
-  delete libEditingItem._tempPrograms;
   
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title || '새 프롬프트';
   const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc || '';
@@ -3632,38 +3621,72 @@ libModalEdit.addEventListener('click', enterEditMode);
 libModalCancel.addEventListener('click', exitEditMode);
 libModalSave.addEventListener('click', saveEdit);
 
-// Program selection pills click events
-document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(btn => {
-  btn.addEventListener('click', function() {
-    if (!libEditingItem) return;
-    if (!libEditingItem._tempPrograms) libEditingItem._tempPrograms = [];
-    
-    const progVal = this.dataset.program;
-    const idx = libEditingItem._tempPrograms.indexOf(progVal);
-    
-    if (idx > -1) {
-      // Already selected -> deselect
-      libEditingItem._tempPrograms.splice(idx, 1);
-      this.classList.remove('is-active');
-      this.style.background = '#f5f5f7';
-      this.style.color = '#555';
-      this.style.borderColor = 'rgba(0,0,0,0.08)';
-      this.style.fontWeight = '500';
+// Dropdown toggle and selection logic for program inputs
+const progInput = document.getElementById('lib-modal-edit-program-input');
+const progDropdown = document.getElementById('lib-modal-edit-program-dropdown');
+
+function updateDropdownSelections() {
+  if (!progInput) return;
+  const currentVal = progInput.value;
+  const currentProgs = currentVal.split(',').map(p => p.trim()).filter(Boolean);
+  
+  document.querySelectorAll('.program-dropdown-item').forEach(item => {
+    const prog = item.dataset.program;
+    if (currentProgs.includes(prog)) {
+      item.style.background = '#FFF1BC';
+      item.style.fontWeight = '600';
     } else {
-      // Try to select
-      if (libEditingItem._tempPrograms.length >= 2) {
-        showToast('최대 2개까지 선택할 수 있습니다.');
-        return;
-      }
-      libEditingItem._tempPrograms.push(progVal);
-      this.classList.add('is-active');
-      this.style.background = '#FFF1BC';
-      this.style.color = '#333';
-      this.style.borderColor = 'transparent';
-      this.style.fontWeight = '600';
+      item.style.background = '';
+      item.style.fontWeight = '';
     }
   });
-});
+}
+
+if (progInput && progDropdown) {
+  progInput.addEventListener('focus', function() {
+    progDropdown.classList.remove('hidden');
+    updateDropdownSelections();
+  });
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#lib-modal-edit-program-input') && !e.target.closest('#lib-modal-edit-program-dropdown')) {
+      progDropdown.classList.add('hidden');
+    }
+  });
+
+  // Handle dropdown item click
+  document.querySelectorAll('.program-dropdown-item').forEach(item => {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const prog = this.dataset.program;
+      let currentVal = progInput.value;
+      let currentProgs = currentVal.split(',').map(p => p.trim()).filter(Boolean);
+      
+      const idx = currentProgs.indexOf(prog);
+      if (idx > -1) {
+        // Remove selection
+        currentProgs.splice(idx, 1);
+      } else {
+        // Add selection (Max 2)
+        if (currentProgs.length >= 2) {
+          showToast('최대 2개까지 선택할 수 있습니다.');
+          return;
+        }
+        currentProgs.push(prog);
+      }
+      
+      progInput.value = currentProgs.join(', ');
+      updateDropdownSelections();
+      progInput.focus();
+    });
+  });
+
+  // Update dropdown highlight status as user types custom programs
+  progInput.addEventListener('input', function() {
+    updateDropdownSelections();
+  });
+}
 
 const libModalApprove = document.getElementById('lib-modal-approve');
 const libModalDecline = document.getElementById('lib-modal-decline');

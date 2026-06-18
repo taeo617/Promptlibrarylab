@@ -434,16 +434,21 @@
           placeholder="태그/키워드 (쉼표로 구분, 예: 인물, 사진보정)"
           style="font-family: inherit; font-size: 13.5px; color: var(--color-ink); background: #f5f5f7; border: 1.5px solid rgba(0, 0, 0, 0.08); border-radius: var(--r-md); padding: 8px var(--sp-md); outline: none; transition: border-color var(--t-fast); width: 100%; box-sizing: border-box; margin-top: 4px;" />
         <!-- Program selection -->
-        <div style="display: flex; flex-direction: column; width: 100%; margin-top: 8px; gap: 6px;">
-          <div style="font-size: 13px; font-weight: 600; color: var(--color-ink); opacity: 0.8; text-align: left;">활용 프로그램</div>
-          <div id="lib-modal-edit-program-options" style="display: flex; gap: 6px; flex-wrap: wrap; width: 100%;">
-            <button type="button" class="program-pill" data-program="Midjourney" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Midjourney</button>
-            <button type="button" class="program-pill" data-program="Nanobanana Pro" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Nanobanana Pro</button>
-            <button type="button" class="program-pill" data-program="Nanobanana 2" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Nanobanana 2</button>
-            <button type="button" class="program-pill" data-program="GPT 2" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">GPT 2</button>
-            <button type="button" class="program-pill" data-program="Vizcom" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Vizcom</button>
-            <button type="button" class="program-pill" data-program="Seedance" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Seedance</button>
-            <button type="button" class="program-pill" data-program="Kling" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Kling</button>
+        <div style="display: flex; flex-direction: column; width: 100%; margin-top: 8px; gap: 6px; position: relative;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-ink); opacity: 0.8; text-align: left;">활용 프로그램 (최대 2개 선택)</div>
+          <div style="position: relative; width: 100%;">
+            <input type="text" id="lib-modal-edit-program-input" placeholder="클릭하여 프로그램을 선택하거나 직접 입력하세요 (쉼표 구분)"
+              style="font-family: inherit; font-size: 13.5px; color: var(--color-ink); background: #f5f5f7; border: 1.5px solid rgba(0, 0, 0, 0.08); border-radius: var(--r-md); padding: 8px var(--sp-md); outline: none; transition: border-color var(--t-fast); width: 100%; box-sizing: border-box;" />
+            <div id="lib-modal-edit-program-dropdown" class="hidden"
+              style="position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid rgba(0,0,0,0.15); border-radius: var(--r-md); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; margin-top: 4px; box-sizing: border-box;">
+              <div class="program-dropdown-item" data-program="Midjourney" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Midjourney</div>
+              <div class="program-dropdown-item" data-program="Nanobanana Pro" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Nanobanana Pro</div>
+              <div class="program-dropdown-item" data-program="Nanobanana 2" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Nanobanana 2</div>
+              <div class="program-dropdown-item" data-program="GPT 2" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">GPT 2</div>
+              <div class="program-dropdown-item" data-program="Vizcom" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Vizcom</div>
+              <div class="program-dropdown-item" data-program="Seedance 2.0" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Seedance 2.0</div>
+              <div class="program-dropdown-item" data-program="Kling" style="padding: 8px 12px; font-size: 13px; color: #333; cursor: pointer; text-align: left; transition: background 0.2s;">Kling</div>
+            </div>
           </div>
         </div>
 
