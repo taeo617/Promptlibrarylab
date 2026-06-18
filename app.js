@@ -2632,6 +2632,15 @@ function renderLibrary() {
   // Permanently filter out the card titled '제품 연출컷 9장(식품)'
   sortedData = sortedData.filter(item => item.title !== '제품 연출컷 9장(식품)');
 
+  // Filter out pending requests unless admin or author
+  sortedData = sortedData.filter(item => {
+    if (!item.isPendingRequest) return true;
+    if (isAdmin) return true;
+    const currentAuthor = localStorage.getItem('pl_author') || '';
+    if (isLoggedIn && isAuthorMatch(item.author, currentAuthor)) return true;
+    return false;
+  });
+
   // Dynamically update filter pills based on all unique tags/categories
   const filterContainer = document.getElementById('lib-filters');
   if (filterContainer) {
@@ -2653,8 +2662,8 @@ function renderLibrary() {
       const count = libraryRequests.length;
       html += `<button class="lib-filter-pill ${libCurrentCat === 'pending_req' ? 'is-active' : ''}" data-cat="pending_req" style="background: rgba(255, 59, 48, 0.08); color: #ff3b30; border-color: rgba(255, 59, 48, 0.2); font-weight: ${libCurrentCat === 'pending_req' ? '600' : '400'};">승인 대기 <span class="lib-count" style="color: #ff3b30;">${count}</span></button>`;
     } else if (isLoggedIn) {
-      const userInitials = currentUser ? currentUser.id.toUpperCase() : '';
-      const count = libraryRequests.filter(r => r.author === userInitials).length;
+      const userInitials = currentUser ? currentUser.id : '';
+      const count = libraryRequests.filter(r => isAuthorMatch(r.author, userInitials)).length;
       html += `<button class="lib-filter-pill ${libCurrentCat === 'my_req' ? 'is-active' : ''}" data-cat="my_req" style="background: rgba(255, 149, 0, 0.08); color: #ff9500; border-color: rgba(255, 149, 0, 0.2); font-weight: ${libCurrentCat === 'my_req' ? '600' : '400'};">요청 대기 <span class="lib-count" style="color: #ff9500;">${count}</span></button>`;
     }
 
@@ -2687,8 +2696,8 @@ function renderLibrary() {
   if (libCurrentCat === 'pending_req') {
     filtered = [...libraryRequests];
   } else if (libCurrentCat === 'my_req') {
-    const userInitials = currentUser ? currentUser.id.toUpperCase() : '';
-    filtered = libraryRequests.filter(r => r.author === userInitials);
+    const userInitials = currentUser ? currentUser.id : '';
+    filtered = libraryRequests.filter(r => isAuthorMatch(r.author, userInitials));
   } else {
     filtered = libCurrentCat === 'all' 
       ? sortedData 
