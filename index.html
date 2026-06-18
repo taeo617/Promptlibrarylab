@@ -339,6 +339,7 @@
         <div class="lib-modal__image-grid" id="lib-modal-image-grid"></div>
       </div>
       <h3 class="lib-modal__title" id="lib-modal-title"></h3>
+      <div id="lib-modal-program" class="hidden" style="font-size: 13.5px; font-weight: 600; color: var(--color-ink); opacity: 0.95; text-align: left; margin-top: 4px; margin-bottom: 2px;"></div>
       <p class="lib-modal__desc" id="lib-modal-desc"></p>
 
       <!-- Read-only prompt -->
@@ -428,6 +429,16 @@
         <input type="text" class="lib-modal__edit-tags" id="lib-modal-edit-tags"
           placeholder="태그/키워드 (쉼표로 구분, 예: 인물, 사진보정)"
           style="font-family: inherit; font-size: 13.5px; color: var(--color-ink); background: #f5f5f7; border: 1.5px solid rgba(0, 0, 0, 0.08); border-radius: var(--r-md); padding: 8px var(--sp-md); outline: none; transition: border-color var(--t-fast); width: 100%; box-sizing: border-box; margin-top: 4px;" />
+        <!-- Program selection -->
+        <div style="display: flex; flex-direction: column; width: 100%; margin-top: 8px; gap: 6px;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--color-ink); opacity: 0.8; text-align: left;">활용 프로그램</div>
+          <div id="lib-modal-edit-program-options" style="display: flex; gap: 6px; flex-wrap: wrap; width: 100%;">
+            <button type="button" class="program-pill" data-program="미드저니" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">미드저니</button>
+            <button type="button" class="program-pill" data-program="나노바나나프로" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">나노바나나프로</button>
+            <button type="button" class="program-pill" data-program="GPT 2" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">GPT 2</button>
+            <button type="button" class="program-pill" data-program="Vizcom" style="font-family: inherit; font-size: 12px; font-weight: 500; padding: 6px 14px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,0.08); background: #f5f5f7; color: #555; cursor: pointer; transition: all 0.2s;">Vizcom</button>
+          </div>
+        </div>
 
         <div class="lib-modal__edit-tabs" style="display: flex; gap: 8px; margin: 8px 0;">
           <button class="lib-edit-tab is-active" id="lib-edit-tab-ko"

@@ -1066,7 +1066,8 @@ function loadLibraryOverrides() {
             thumbnails: data.thumbnails || [],
             originalImages: data.originalImages || [],
             isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3),
-            author: data.author || '김태영'
+            author: data.author || '김태영',
+            program: data.program || ''
           };
           libraryData.push(item);
         } else {
@@ -1091,6 +1092,9 @@ function loadLibraryOverrides() {
           else if (data.images && data.images.length === 3) item.isReferenceType = true;
           if (data.author !== undefined) {
             item.author = data.author;
+          }
+          if (data.program !== undefined) {
+            item.program = data.program;
           }
         }
       });
@@ -1133,7 +1137,8 @@ function startLibraryOverridesListener() {
           originalImages: data.originalImages || [],
           isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3),
           author: data.author || '김태영',
-          order: data.order !== undefined ? data.order : 99999
+          order: data.order !== undefined ? data.order : 99999,
+          program: data.program || ''
         };
         libraryData.push(item);
       } else {
@@ -1160,6 +1165,9 @@ function startLibraryOverridesListener() {
         }
         if (data.order !== undefined) {
           item.order = data.order;
+        }
+        if (data.program !== undefined) {
+          item.program = data.program;
         }
       }
     });
@@ -1191,7 +1199,8 @@ function startLibraryRequestsListener() {
           thumbnails: Array.isArray(d.thumbnails) ? d.thumbnails : [],
           isReferenceType: d.isReferenceType || false,
           author: d.author || 'GST',
-          isPendingRequest: true
+          isPendingRequest: true,
+          program: d.program || ''
         };
       });
       // Re-render library if active
@@ -2823,10 +2832,13 @@ function renderLibrary() {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
            </button>`;
 
+      let programHtmlList = item.program ? `<div class="lib-card__program" style="font-size: 12px; font-weight: 600; color: var(--color-ink); opacity: 0.95; margin-top: 2px;">${escHtml(item.program)}</div>` : '';
+
       card.innerHTML = `
         ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
           <h3 class="lib-card__title" style="margin: 0; font-size: 15px; display: flex; align-items: center;">${pendingBadge}${escHtml(item.title)}</h3>
+          ${programHtmlList}
           <p class="lib-card__desc" style="margin: 0; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.65;">${escHtml(displayDesc)}</p>
         </div>
         <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-right: 12px; max-width: 200px;" class="list-hide-mobile">
@@ -2870,6 +2882,12 @@ function renderLibrary() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
            </button>`;
 
+      let adjustedThumbHtml = thumbHtml;
+      if (item.program && adjustedThumbHtml) {
+        adjustedThumbHtml = adjustedThumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 8px;" class="lib-card__thumb');
+      }
+      let programHtmlGrid = item.program ? `<div class="lib-card__program" style="font-size: 13px; font-weight: 600; color: var(--color-ink); opacity: 0.95; margin-bottom: 8px; text-align: left;">${escHtml(item.program)}</div>` : '';
+
       card.innerHTML =
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-md); height: 22px; flex-shrink: 0;">' +
           '<div class="lib-card__tags" style="margin-bottom: 0;">' +
@@ -2878,7 +2896,8 @@ function renderLibrary() {
           '<span class="lib-card__detail-hint" style="margin: 0;">자세히 보기 →</span>' +
         '</div>' +
         `<h3 class="lib-card__title" style="display: flex; align-items: center;">${pendingBadge}${escHtml(item.title)}</h3>` +
-        thumbHtml +
+        adjustedThumbHtml +
+        programHtmlGrid +
         `<p class="lib-card__desc">${escHtml(displayDesc)}</p>` +
         '<div class="lib-card__footer">' +
           copyArea +
@@ -3025,6 +3044,18 @@ function openLibModal(item) {
   document.getElementById('lib-modal-tags').innerHTML =
     item.tags.map((t, i) => `<span class="lib-tag${i === 0 ? ' lib-tag--primary' : ''}">${escHtml(t)}</span>`).join('');
   document.getElementById('lib-modal-title').textContent = item.title;
+  
+  const progEl = document.getElementById('lib-modal-program');
+  if (progEl) {
+    if (item.program) {
+      progEl.textContent = item.program;
+      progEl.classList.remove('hidden');
+    } else {
+      progEl.textContent = '';
+      progEl.classList.add('hidden');
+    }
+  }
+  
   document.getElementById('lib-modal-desc').textContent = item.desc;
   
   // Render prompt based on active language
@@ -3273,6 +3304,23 @@ function enterEditMode() {
   document.getElementById('lib-modal-edit-desc').value = libEditingItem.desc || '';
   document.getElementById('lib-modal-edit-tags').value = libEditingItem.tags ? libEditingItem.tags.join(', ') : '';
   
+  libEditingItem._tempProgram = libEditingItem.program || '';
+  document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(pill => {
+    if (pill.dataset.program === libEditingItem._tempProgram) {
+      pill.classList.add('is-active');
+      pill.style.background = '#FFF1BC';
+      pill.style.color = '#333';
+      pill.style.borderColor = 'transparent';
+      pill.style.fontWeight = '600';
+    } else {
+      pill.classList.remove('is-active');
+      pill.style.background = '#f5f5f7';
+      pill.style.color = '#555';
+      pill.style.borderColor = 'rgba(0,0,0,0.08)';
+      pill.style.fontWeight = '500';
+    }
+  });
+  
   // Populate the bilingual textareas
   libModalEditTextareaKo.value = libEditingItem.promptKo || libEditingItem.prompt || '';
   libModalEditTextareaEn.value = libEditingItem.promptEn || libEditingItem.prompt || '';
@@ -3347,6 +3395,9 @@ async function saveEdit() {
   }
   
   const newPrompt = newPromptEn || newPromptKo;
+  const newProgram = libEditingItem._tempProgram || '';
+  libEditingItem.program = newProgram;
+  delete libEditingItem._tempProgram;
   
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title || '새 프롬프트';
   const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc || '';
@@ -3390,7 +3441,8 @@ async function saveEdit() {
     images: libEditingItem.images || [],
     thumbnails: libEditingItem.thumbnails || [],
     isReferenceType: libEditingItem.isReferenceType || false,
-    author: authorToSave
+    author: authorToSave,
+    program: newProgram
   };
 
   if (isAdmin) {
@@ -3413,6 +3465,16 @@ async function saveEdit() {
 
   // Update display
   document.getElementById('lib-modal-title').textContent = newTitle;
+  const progEl = document.getElementById('lib-modal-program');
+  if (progEl) {
+    if (newProgram) {
+      progEl.textContent = newProgram;
+      progEl.classList.remove('hidden');
+    } else {
+      progEl.textContent = '';
+      progEl.classList.add('hidden');
+    }
+  }
   document.getElementById('lib-modal-desc').textContent = newDesc;
   if (libModalPromptTabs) libModalPromptTabs.classList.remove('hidden');
   
@@ -3472,6 +3534,31 @@ libModalEdit.addEventListener('click', enterEditMode);
 libModalCancel.addEventListener('click', exitEditMode);
 libModalSave.addEventListener('click', saveEdit);
 
+// Program selection pills click events
+document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const wasActive = this.classList.contains('is-active');
+    document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(b => {
+      b.classList.remove('is-active');
+      b.style.background = '#f5f5f7';
+      b.style.color = '#555';
+      b.style.borderColor = 'rgba(0,0,0,0.08)';
+      b.style.fontWeight = '500';
+    });
+    
+    if (wasActive) {
+      if (libEditingItem) libEditingItem._tempProgram = '';
+    } else {
+      this.classList.add('is-active');
+      this.style.background = '#FFF1BC';
+      this.style.color = '#333';
+      this.style.borderColor = 'transparent';
+      this.style.fontWeight = '600';
+      if (libEditingItem) libEditingItem._tempProgram = this.dataset.program;
+    }
+  });
+});
+
 const libModalApprove = document.getElementById('lib-modal-approve');
 const libModalDecline = document.getElementById('lib-modal-decline');
 
@@ -3492,7 +3579,8 @@ if (libModalApprove) {
         images: libEditingItem.images || [],
         thumbnails: libEditingItem.thumbnails || [],
         isReferenceType: libEditingItem.isReferenceType || false,
-        author: libEditingItem.author || '김태영'
+        author: libEditingItem.author || '김태영',
+        program: libEditingItem.program || ''
       };
       
       // 1. Save to library overrides

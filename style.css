@@ -861,6 +861,13 @@ body.is-admin .lib-card {
   text-overflow: ellipsis;
   flex-shrink: 0;
 }
+.lib-card__program {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  opacity: 0.95;
+  text-align: left;
+}
 .lib-card__desc {
   font-size: 13px;
   color: var(--color-ink);
