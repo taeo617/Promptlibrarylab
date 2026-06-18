@@ -3073,11 +3073,10 @@ function openLibModal(item) {
   // Render prompt based on active language
   updatePromptDisplay();
 
-  // Show/hide edit button: admin can edit live items, author can edit their own pending requests
+  // Show/hide edit button: admin can edit live items, author can edit their own items (both pending and approved/posted)
   const currentAuthor = localStorage.getItem('pl_author') || '';
   const isAuthor = item.author === currentAuthor && currentAuthor !== '';
-  const canEditPending = item.isPendingRequest && isAuthor;
-  if ((isAdmin && !item.isPendingRequest) || canEditPending) {
+  if (isAdmin || isAuthor) {
     libModalEdit.classList.remove('hidden');
   } else {
     libModalEdit.classList.add('hidden');
@@ -3299,8 +3298,7 @@ function enterEditMode() {
   const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
   const currentAuthor = localStorage.getItem('pl_author') || '';
   const isAuthor = libEditingItem.author === currentAuthor && currentAuthor !== '';
-  const canEditPending = libEditingItem.isPendingRequest && isAuthor;
-  const allowed = isAdmin || canEditPending || (isLoggedIn && isNewCustom && (isAuthor || !libEditingItem.author));
+  const allowed = isAdmin || isAuthor || (isLoggedIn && isNewCustom && !libEditingItem.author);
   if (!allowed) return;
   libEditMode = true;
   libEditActiveLang = 'ko'; // Default edit tab is Korean
@@ -3459,7 +3457,10 @@ async function saveEdit() {
     program: newProgram
   };
 
-  if (isAdmin) {
+  const currentAuthor = localStorage.getItem('pl_author') || '';
+  const isAuthor = libEditingItem.author === currentAuthor && currentAuthor !== '';
+
+  if (isAdmin || (isAuthor && !libEditingItem.isPendingRequest)) {
     saveLibraryOverride(libEditingItem.id, overrideData);
 
     const existing = libraryData.find(d => d.id === libEditingItem.id);
@@ -3507,7 +3508,7 @@ async function saveEdit() {
   // Delightful "Saved" animation on the save button
   const saveBtn = document.getElementById('lib-modal-save');
   const originalHtml = saveBtn.innerHTML;
-  saveBtn.innerHTML = isAdmin 
+  saveBtn.innerHTML = (isAdmin || (isAuthor && !libEditingItem.isPendingRequest))
     ? '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 저장됨</span>'
     : '<span style="display:inline-flex; align-items:center; gap:4px; animation: popIn 0.3s ease;">✓ 요청됨</span>';
   saveBtn.style.background = '#34c759'; // Premium success green
@@ -3523,7 +3524,7 @@ async function saveEdit() {
     saveBtn.style.borderColor = '';
     saveBtn.disabled = false;
     
-    if (isAdmin) {
+    if (isAdmin || (isAuthor && !libEditingItem.isPendingRequest)) {
       exitEditMode();
       renderLibrary();
       showToast('프롬프트가 저장되었습니다');
@@ -3744,8 +3745,9 @@ function setupUploadSlot(slot, input, imageIndex) {
     
     if (!libEditingItem) return;
     const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
-    const isAuthor = libEditingItem.author === (currentUser && currentUser.id ? currentUser.id.toUpperCase() : '');
-    const allowed = isAdmin || (isLoggedIn && isNewCustom && (isAuthor || !libEditingItem.author));
+    const currentAuthor = localStorage.getItem('pl_author') || '';
+    const isAuthor = libEditingItem.author === currentAuthor && currentAuthor !== '';
+    const allowed = isAdmin || (isLoggedIn && (isAuthor || (isNewCustom && !libEditingItem.author)));
     if (!allowed) return;
 
     const files = Array.from(e.dataTransfer.files);
@@ -3757,8 +3759,9 @@ function setupUploadSlot(slot, input, imageIndex) {
   input.addEventListener('change', async function() {
     if (!libEditingItem) return;
     const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
-    const isAuthor = libEditingItem.author === (currentUser && currentUser.id ? currentUser.id.toUpperCase() : '');
-    const allowed = isAdmin || (isLoggedIn && isNewCustom && (isAuthor || !libEditingItem.author));
+    const currentAuthor = localStorage.getItem('pl_author') || '';
+    const isAuthor = libEditingItem.author === currentAuthor && currentAuthor !== '';
+    const allowed = isAdmin || (isLoggedIn && (isAuthor || (isNewCustom && !libEditingItem.author)));
     if (!allowed) return;
 
     const files = Array.from(this.files);
@@ -3774,8 +3777,9 @@ function setupUploadSlot(slot, input, imageIndex) {
       e.stopPropagation();
       if (!libEditingItem) return;
       const isNewCustom = String(libEditingItem.id).startsWith('lib-custom-');
-      const isAuthor = libEditingItem.author === (currentUser && currentUser.id ? currentUser.id.toUpperCase() : '');
-      const allowed = isAdmin || (isLoggedIn && isNewCustom && (isAuthor || !libEditingItem.author));
+      const currentAuthor = localStorage.getItem('pl_author') || '';
+      const isAuthor = libEditingItem.author === currentAuthor && currentAuthor !== '';
+      const allowed = isAdmin || (isLoggedIn && (isAuthor || (isNewCustom && !libEditingItem.author)));
       if (!allowed) return;
 
       if (!libEditingItem.images) libEditingItem.images = [];
