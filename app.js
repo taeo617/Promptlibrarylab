@@ -1440,13 +1440,13 @@ function mkBubble(p, x, y, enter) {
         if (!p.id.startsWith('local-')) {
           db.collection('prompts').doc(p.id).update({ 
             text: newText,
-            isPending: !isLoggedIn
+            isPending: !isAdmin
           }).then(() => {
-            if (!isLoggedIn) showToast('수정 요청이 전송되었습니다');
+            if (!isAdmin) showToast('수정 요청이 전송되었습니다');
           }).catch(function(err) { console.warn(err); });
         } else {
           p.text = newText;
-          if (!isLoggedIn) showToast('수정 요청이 전송되었습니다');
+          if (!isAdmin) showToast('수정 요청이 전송되었습니다');
         }
       } else if (!newText) {
         textEl.textContent = p.text; // revert if empty
@@ -2062,15 +2062,15 @@ function renderList() {
           if (!p.id.startsWith('local-')) {
             db.collection('prompts').doc(p.id).update({ 
               text: newText,
-              isPending: !isLoggedIn
+              isPending: !isAdmin
             })
               .then(() => {
-                showToast(isLoggedIn ? '수정되었습니다' : '수정 요청이 전송되었습니다');
+                showToast(isAdmin ? '수정되었습니다' : '수정 요청이 전송되었습니다');
               })
               .catch(function(err) { console.warn(err); });
           } else {
             p.text = newText;
-            showToast(isLoggedIn ? '수정되었습니다' : '수정 요청이 전송되었습니다');
+            showToast(isAdmin ? '수정되었습니다' : '수정 요청이 전송되었습니다');
           }
         } else if (!newText) {
           textEl.textContent = p.text; // revert if empty
@@ -2360,7 +2360,7 @@ function submitPrompt() {
     localStorage.removeItem('pl_author');
   }
 
-  const isPending = !isLoggedIn; // 비로그인 시 대기 상태로
+  const isPending = !isAdmin; // 관리자가 아니면 무조건 대기 상태로
 
   db.collection('prompts').add({
     text: text,
