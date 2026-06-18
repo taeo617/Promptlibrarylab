@@ -512,6 +512,10 @@ function loginSuccess(user) {
   closeLoginModal();
   showToast((isAdmin ? '관리자' : currentUser.id) + '로 로그인되었습니다');
 
+  if (currentView === 'library') {
+    renderLibrary();
+  }
+
   // Execute pending action
   if (pendingAuthAction) {
     const action = pendingAuthAction;
@@ -2703,7 +2707,7 @@ function renderLibrary() {
 
   filtered.forEach(item => {
     const card = document.createElement('div');
-    card.className = 'lib-card' + (libLayoutMode === 'list' ? ' is-list' : '');
+    card.className = 'lib-card' + (libLayoutMode === 'list' ? ' is-list' : '') + (!isLoggedIn ? ' is-unauthorized' : '');
     card.dataset.id = item.id;
 
     // Drag and Drop for Admin reordering
@@ -2764,7 +2768,7 @@ function renderLibrary() {
       let beforeImg = item.images[0];
       let afterImg = item.images.length === 3 ? item.images[2] : item.images[1];
       thumbHtml = `
-        <div class="lib-card__thumb slider-container ${!isLoggedIn ? 'is-blurred' : ''}" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
+        <div class="lib-card__thumb slider-container" onmousemove="handleSliderMove(event, this)" ontouchmove="handleSliderMove(event, this)">
           <img src="${afterImg}" alt="After" class="slider-after" />
           <div class="slider-before-wrapper" style="clip-path: inset(0 50% 0 0); -webkit-clip-path: inset(0 50% 0 0);">
             <img src="${beforeImg}" alt="Before" class="slider-before" />
@@ -2773,12 +2777,12 @@ function renderLibrary() {
         </div>
       `;
     } else if (item.thumbnails && item.thumbnails.length > 0) {
-      thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.thumbnails[0]}" alt="썸네일" /></div>`;
+      thumbHtml = `<div class="lib-card__thumb"><img src="${item.thumbnails[0]}" alt="썸네일" /></div>`;
     } else if (item.images && item.images.length > 0) {
-      thumbHtml = `<div class="lib-card__thumb ${!isLoggedIn ? 'is-blurred' : ''}"><img src="${item.images[0]}" alt="썸네일" /></div>`;
+      thumbHtml = `<div class="lib-card__thumb"><img src="${item.images[0]}" alt="썸네일" /></div>`;
     } else {
       thumbHtml = `
-        <div class="lib-card__thumb lib-card__thumb--placeholder ${!isLoggedIn ? 'is-blurred' : ''}">
+        <div class="lib-card__thumb lib-card__thumb--placeholder">
           <div class="placeholder-content">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity: 0.3; margin-bottom: 8px;">
               <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -2843,7 +2847,7 @@ function renderLibrary() {
       }
 
       card.innerHTML = `
-        ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
+        ${thumbHtml ? `<div style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
         <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
           <h3 class="lib-card__title" style="margin: 0; font-size: 15px; display: flex; align-items: center;">${pendingBadge}${escHtml(item.title)}</h3>
           ${programHtmlList}
@@ -2927,13 +2931,6 @@ function renderLibrary() {
       copyBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (!isLoggedIn) {
-          unauthorizedClicksCount++;
-          if (unauthorizedClicksCount >= 2) {
-            unauthorizedClicksCount = 0;
-            openLoginModal();
-          } else {
-            showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
-          }
           return;
         }
         copyToClipboard(item.prompt, this);
@@ -2944,13 +2941,6 @@ function renderLibrary() {
     card.addEventListener('click', function(e) {
       if (isDraggingCard) return;
       if (!isLoggedIn) {
-        unauthorizedClicksCount++;
-        if (unauthorizedClicksCount >= 2) {
-          unauthorizedClicksCount = 0;
-          openLoginModal();
-        } else {
-          showToast('로그인이 필요한 서비스입니다 (한 번 더 클릭하면 로그인 창이 뜹니다)');
-        }
         return;
       }
       openLibModal(item);

@@ -2293,6 +2293,22 @@ body.is-admin .lib-card {
   transition: filter 0.3s ease;
 }
 
+.lib-card.is-unauthorized {
+  cursor: default !important;
+}
+.lib-card.is-unauthorized:hover {
+  transform: none !important;
+  background: var(--color-glass-bg) !important;
+}
+.lib-card.is-unauthorized .lib-card__copy {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+.lib-card.is-unauthorized .lib-card__detail-hint {
+  display: none !important;
+}
+
 /* Extra-small mobile optimizations */
 @media (max-width: 480px) {
   .list-item {
