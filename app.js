@@ -2836,8 +2836,8 @@ function renderLibrary() {
       if (item.program) {
         const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
         if (progs.length > 0) {
-          programHtmlList = '<div class="lib-card__programs-container" style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; margin-bottom: 2px;">' +
-            progs.map(p => `<div class="lib-card__program" style="font-size: 11px; padding: 1px 4px;">${escHtml(p)}</div>`).join('') +
+          programHtmlList = '<div class="lib-card__programs-container" style="display: flex; align-items: center; flex-wrap: wrap; margin-top: 2px; margin-bottom: 2px;">' +
+            progs.map((p, idx) => `<span class="lib-card__program" style="font-size: 11px; padding: 1px 4px;">${escHtml(p)}</span>` + (idx < progs.length - 1 ? '<span style="font-size: 11px; color: var(--color-ink); opacity: 0.6; margin-left: 1px; margin-right: 4px;">,</span>' : '')).join('') +
             '</div>';
         }
       }
@@ -2898,8 +2898,8 @@ function renderLibrary() {
       if (item.program) {
         const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
         if (progs.length > 0) {
-          programHtmlGrid = '<div class="lib-card__programs-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">' +
-            progs.map(p => `<div class="lib-card__program">${escHtml(p)}</div>`).join('') +
+          programHtmlGrid = '<div class="lib-card__programs-container" style="display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 8px;">' +
+            progs.map((p, idx) => `<span class="lib-card__program">${escHtml(p)}</span>` + (idx < progs.length - 1 ? '<span style="font-size: 11.5px; color: var(--color-ink); opacity: 0.6; margin-left: 1px; margin-right: 5px;">,</span>' : '')).join('') +
             '</div>';
         }
       }
@@ -3065,11 +3065,12 @@ function openLibModal(item) {
   if (progEl) {
     if (item.program) {
       const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
-      progEl.innerHTML = progs.map(p => `<span class="lib-card__program">${escHtml(p)}</span>`).join('');
+      progEl.innerHTML = progs.map((p, idx) => `<span class="lib-card__program">${escHtml(p)}</span>` + (idx < progs.length - 1 ? '<span style="font-size: 12.5px; color: var(--color-ink); opacity: 0.6; margin-left: 1px; margin-right: 5px;">,</span>' : '')).join('');
       progEl.classList.remove('hidden');
       progEl.style.display = 'flex';
+      progEl.style.alignItems = 'center';
       progEl.style.flexWrap = 'wrap';
-      progEl.style.gap = '6px';
+      progEl.style.gap = '0';
     } else {
       progEl.innerHTML = '';
       progEl.classList.add('hidden');
@@ -3492,11 +3493,12 @@ async function saveEdit() {
   if (progEl) {
     if (newProgram) {
       const progs = newProgram.split(',').map(p => p.trim()).filter(Boolean);
-      progEl.innerHTML = progs.map(p => `<span class="lib-card__program">${escHtml(p)}</span>`).join('');
+      progEl.innerHTML = progs.map((p, idx) => `<span class="lib-card__program">${escHtml(p)}</span>` + (idx < progs.length - 1 ? '<span style="font-size: 12.5px; color: var(--color-ink); opacity: 0.6; margin-left: 1px; margin-right: 5px;">,</span>' : '')).join('');
       progEl.classList.remove('hidden');
       progEl.style.display = 'flex';
+      progEl.style.alignItems = 'center';
       progEl.style.flexWrap = 'wrap';
-      progEl.style.gap = '6px';
+      progEl.style.gap = '0';
     } else {
       progEl.innerHTML = '';
       progEl.classList.add('hidden');
