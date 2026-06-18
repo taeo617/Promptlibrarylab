@@ -2832,7 +2832,7 @@ function renderLibrary() {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
            </button>`;
 
-      let programHtmlList = item.program ? `<div class="lib-card__program" style="font-size: 12px; font-weight: 600; color: var(--color-ink); opacity: 0.95; margin-top: 2px;">${escHtml(item.program)}</div>` : '';
+      let programHtmlList = item.program ? `<div class="lib-card__program" style="margin-top: 2px; margin-bottom: 2px;">${escHtml(item.program)}</div>` : '';
 
       card.innerHTML = `
         ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
@@ -2886,7 +2886,7 @@ function renderLibrary() {
       if (item.program && adjustedThumbHtml) {
         adjustedThumbHtml = adjustedThumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 8px;" class="lib-card__thumb');
       }
-      let programHtmlGrid = item.program ? `<div class="lib-card__program" style="font-size: 13px; font-weight: 600; color: var(--color-ink); opacity: 0.95; margin-bottom: 8px; text-align: left;">${escHtml(item.program)}</div>` : '';
+      let programHtmlGrid = item.program ? `<div class="lib-card__program" style="margin-bottom: 8px;">${escHtml(item.program)}</div>` : '';
 
       card.innerHTML =
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-md); height: 22px; flex-shrink: 0;">' +
