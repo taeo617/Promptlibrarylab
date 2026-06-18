@@ -2832,7 +2832,15 @@ function renderLibrary() {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 복사
            </button>`;
 
-      let programHtmlList = item.program ? `<div class="lib-card__program" style="margin-top: 2px; margin-bottom: 2px;">${escHtml(item.program)}</div>` : '';
+      let programHtmlList = '';
+      if (item.program) {
+        const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
+        if (progs.length > 0) {
+          programHtmlList = '<div class="lib-card__programs-container" style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; margin-bottom: 2px;">' +
+            progs.map(p => `<div class="lib-card__program" style="font-size: 11px; padding: 1px 4px;">${escHtml(p)}</div>`).join('') +
+            '</div>';
+        }
+      }
 
       card.innerHTML = `
         ${thumbHtml ? `<div class="${!isLoggedIn ? 'is-blurred' : ''}" style="width: 80px; flex-shrink: 0;">${thumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 0;" class="lib-card__thumb')}</div>` : '<div style="width: 80px; height: 60px; background: rgba(0,0,0,0.04); border-radius: var(--r-sm); flex-shrink:0;"></div>'}
@@ -2886,7 +2894,15 @@ function renderLibrary() {
       if (item.program && adjustedThumbHtml) {
         adjustedThumbHtml = adjustedThumbHtml.replace('class="lib-card__thumb', 'style="margin-bottom: 8px;" class="lib-card__thumb');
       }
-      let programHtmlGrid = item.program ? `<div class="lib-card__program" style="margin-bottom: 8px;">${escHtml(item.program)}</div>` : '';
+      let programHtmlGrid = '';
+      if (item.program) {
+        const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
+        if (progs.length > 0) {
+          programHtmlGrid = '<div class="lib-card__programs-container" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;">' +
+            progs.map(p => `<div class="lib-card__program">${escHtml(p)}</div>`).join('') +
+            '</div>';
+        }
+      }
 
       card.innerHTML =
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--sp-md); height: 22px; flex-shrink: 0;">' +
@@ -3048,11 +3064,16 @@ function openLibModal(item) {
   const progEl = document.getElementById('lib-modal-program');
   if (progEl) {
     if (item.program) {
-      progEl.textContent = item.program;
+      const progs = item.program.split(',').map(p => p.trim()).filter(Boolean);
+      progEl.innerHTML = progs.map(p => `<span class="lib-card__program">${escHtml(p)}</span>`).join('');
       progEl.classList.remove('hidden');
+      progEl.style.display = 'flex';
+      progEl.style.flexWrap = 'wrap';
+      progEl.style.gap = '6px';
     } else {
-      progEl.textContent = '';
+      progEl.innerHTML = '';
       progEl.classList.add('hidden');
+      progEl.style.display = 'none';
     }
   }
   
@@ -3304,9 +3325,11 @@ function enterEditMode() {
   document.getElementById('lib-modal-edit-desc').value = libEditingItem.desc || '';
   document.getElementById('lib-modal-edit-tags').value = libEditingItem.tags ? libEditingItem.tags.join(', ') : '';
   
-  libEditingItem._tempProgram = libEditingItem.program || '';
+  let selectedProgs = libEditingItem.program ? libEditingItem.program.split(',').map(p => p.trim()).filter(Boolean) : [];
+  libEditingItem._tempPrograms = selectedProgs;
   document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(pill => {
-    if (pill.dataset.program === libEditingItem._tempProgram) {
+    const isSelected = selectedProgs.includes(pill.dataset.program);
+    if (isSelected) {
       pill.classList.add('is-active');
       pill.style.background = '#FFF1BC';
       pill.style.color = '#333';
@@ -3395,9 +3418,9 @@ async function saveEdit() {
   }
   
   const newPrompt = newPromptEn || newPromptKo;
-  const newProgram = libEditingItem._tempProgram || '';
+  const newProgram = (libEditingItem._tempPrograms || []).join(', ');
   libEditingItem.program = newProgram;
-  delete libEditingItem._tempProgram;
+  delete libEditingItem._tempPrograms;
   
   const newTitle = document.getElementById('lib-modal-edit-title').value.trim() || libEditingItem.title || '새 프롬프트';
   const newDesc = document.getElementById('lib-modal-edit-desc').value.trim() || libEditingItem.desc || '';
@@ -3468,11 +3491,16 @@ async function saveEdit() {
   const progEl = document.getElementById('lib-modal-program');
   if (progEl) {
     if (newProgram) {
-      progEl.textContent = newProgram;
+      const progs = newProgram.split(',').map(p => p.trim()).filter(Boolean);
+      progEl.innerHTML = progs.map(p => `<span class="lib-card__program">${escHtml(p)}</span>`).join('');
       progEl.classList.remove('hidden');
+      progEl.style.display = 'flex';
+      progEl.style.flexWrap = 'wrap';
+      progEl.style.gap = '6px';
     } else {
-      progEl.textContent = '';
+      progEl.innerHTML = '';
       progEl.classList.add('hidden');
+      progEl.style.display = 'none';
     }
   }
   document.getElementById('lib-modal-desc').textContent = newDesc;
@@ -3537,24 +3565,32 @@ libModalSave.addEventListener('click', saveEdit);
 // Program selection pills click events
 document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(btn => {
   btn.addEventListener('click', function() {
-    const wasActive = this.classList.contains('is-active');
-    document.querySelectorAll('#lib-modal-edit-program-options .program-pill').forEach(b => {
-      b.classList.remove('is-active');
-      b.style.background = '#f5f5f7';
-      b.style.color = '#555';
-      b.style.borderColor = 'rgba(0,0,0,0.08)';
-      b.style.fontWeight = '500';
-    });
+    if (!libEditingItem) return;
+    if (!libEditingItem._tempPrograms) libEditingItem._tempPrograms = [];
     
-    if (wasActive) {
-      if (libEditingItem) libEditingItem._tempProgram = '';
+    const progVal = this.dataset.program;
+    const idx = libEditingItem._tempPrograms.indexOf(progVal);
+    
+    if (idx > -1) {
+      // Already selected -> deselect
+      libEditingItem._tempPrograms.splice(idx, 1);
+      this.classList.remove('is-active');
+      this.style.background = '#f5f5f7';
+      this.style.color = '#555';
+      this.style.borderColor = 'rgba(0,0,0,0.08)';
+      this.style.fontWeight = '500';
     } else {
+      // Try to select
+      if (libEditingItem._tempPrograms.length >= 2) {
+        showToast('최대 2개까지 선택할 수 있습니다.');
+        return;
+      }
+      libEditingItem._tempPrograms.push(progVal);
       this.classList.add('is-active');
       this.style.background = '#FFF1BC';
       this.style.color = '#333';
       this.style.borderColor = 'transparent';
       this.style.fontWeight = '600';
-      if (libEditingItem) libEditingItem._tempProgram = this.dataset.program;
     }
   });
 });
