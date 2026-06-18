@@ -1140,6 +1140,7 @@ function startLibraryOverridesListener() {
           thumbnails: data.thumbnails || [],
           originalImages: data.originalImages || [],
           isReferenceType: data.isReferenceType !== undefined ? data.isReferenceType : (data.images && data.images.length === 3),
+          isVideoType: data.isVideoType || false,
           author: data.author || '김태영',
           order: data.order !== undefined ? data.order : 99999,
           program: data.program || ''
@@ -1164,6 +1165,7 @@ function startLibraryOverridesListener() {
         if (data.originalImages !== undefined) item.originalImages = data.originalImages;
         if (data.isReferenceType !== undefined) item.isReferenceType = data.isReferenceType;
         else if (data.images && data.images.length === 3) item.isReferenceType = true;
+        if (data.isVideoType !== undefined) item.isVideoType = data.isVideoType;
         if (data.author !== undefined) {
           item.author = data.author;
         }
@@ -1202,6 +1204,7 @@ function startLibraryRequestsListener() {
           images: Array.isArray(d.images) ? d.images : [],
           thumbnails: Array.isArray(d.thumbnails) ? d.thumbnails : [],
           isReferenceType: d.isReferenceType || false,
+          isVideoType: d.isVideoType || false,
           author: d.author || 'GST',
           isPendingRequest: true,
           program: d.program || ''
@@ -2763,8 +2766,23 @@ function renderLibrary() {
     }
 
     let thumbHtml = '';
-    // If it has at least 2 images, use them for Before/After slider regardless of type
-    if (item.images && item.images.length >= 2) {
+    // Dynamic Video/GIF type thumbnail rendering
+    if (item.isVideoType && item.images && item.images[1]) {
+      const isVideoFile = item.images[1].startsWith('data:video/') || item.images[1].includes('.mp4') || item.images[1].includes('.webm');
+      if (isVideoFile) {
+        thumbHtml = `
+          <div class="lib-card__thumb" style="overflow: hidden; position: relative;">
+            <video src="${item.images[1]}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;"></video>
+          </div>
+        `;
+      } else {
+        thumbHtml = `
+          <div class="lib-card__thumb" style="overflow: hidden; position: relative;">
+            <img src="${item.images[1]}" alt="GIF" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
+          </div>
+        `;
+      }
+    } else if (item.images && item.images.length >= 2) {
       let beforeImg = item.images[0];
       let afterImg = item.images.length === 3 ? item.images[2] : item.images[1];
       thumbHtml = `
@@ -3211,11 +3229,20 @@ function renderLibImages(item) {
   // Show images — use originalImages[i] for download if available
   // 썸네일 이미지는 상세 모달 그리드에서 제외하여 중복 노출 방지 (요청사항 반영)
   images.forEach((src, i) => {
+    if (!src) return;
     const div = document.createElement('div');
     div.className = 'lib-modal__image-item';
     div.style.cursor = 'pointer';
-    div.innerHTML = '<img src="' + src + '" alt="이미지 ' + (i + 1) + '" style="transition: transform 0.2s;" />' +
-      (isAdmin ? '<button class="lib-modal__image-delete" data-type="image" data-index="' + i + '">&times;</button>' : '');
+    
+    const isVideoFile = src.startsWith('data:video/') || src.includes('.mp4') || src.includes('.webm');
+    
+    if (isVideoFile) {
+      div.innerHTML = `<video src="${src}" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s;"></video>` +
+        (isAdmin ? '<button class="lib-modal__image-delete" data-type="image" data-index="' + i + '">&times;</button>' : '');
+    } else {
+      div.innerHTML = '<img src="' + src + '" alt="이미지 ' + (i + 1) + '" style="transition: transform 0.2s;" />' +
+        (isAdmin ? '<button class="lib-modal__image-delete" data-type="image" data-index="' + i + '">&times;</button>' : '');
+    }
     
     // Lightbox setup — pass originalImages[i] as second arg so download gets full quality
     div.addEventListener('click', function(e) {
@@ -3251,36 +3278,68 @@ function renderLibImages(item) {
 
 // Lightbox controller functions
 const lightboxEl = document.getElementById('lib-lightbox');
-const lightboxImg = document.getElementById('lib-lightbox-img');
 const lightboxClose = document.getElementById('lib-lightbox-close');
 
 function openLightbox(src, originalSrc) {
-  if (!lightboxEl || !lightboxImg) return;
-  lightboxImg.src = src;
+  if (!lightboxEl) return;
+  const isVideoFile = src.startsWith('data:video/') || src.includes('.mp4') || src.includes('.webm');
+  
+  const lightboxImg = document.getElementById('lib-lightbox-img');
+  const lightboxVid = document.getElementById('lib-lightbox-video');
+  
+  if (isVideoFile) {
+    if (lightboxImg) lightboxImg.style.display = 'none';
+    if (lightboxVid) {
+      lightboxVid.src = src;
+      lightboxVid.style.display = 'block';
+      lightboxVid.style.transform = 'scale(1)';
+    }
+  } else {
+    if (lightboxVid) {
+      lightboxVid.style.display = 'none';
+      lightboxVid.src = '';
+    }
+    if (lightboxImg) {
+      lightboxImg.src = src;
+      lightboxImg.style.display = 'block';
+      lightboxImg.style.transform = 'scale(1)';
+    }
+  }
   
   // Update download button — use originalSrc if provided (full quality), else fallback to display src
   const dlBtn = document.getElementById('lib-lightbox-download');
   if (dlBtn) {
     const downloadSrc = originalSrc || src;
     dlBtn.href = downloadSrc;
-    dlBtn.download = 'image_' + Date.now() + '.jpg';
+    dlBtn.download = isVideoFile ? 'video_' + Date.now() + '.mp4' : 'image_' + Date.now() + '.jpg';
   }
   
   lightboxEl.style.display = 'flex';
   lightboxEl.offsetHeight; // trigger reflow
   lightboxEl.style.opacity = '1';
   lightboxEl.style.pointerEvents = 'auto';
-  lightboxImg.style.transform = 'scale(1)';
 }
 
 function closeLightbox() {
-  if (!lightboxEl || !lightboxImg) return;
+  if (!lightboxEl) return;
   lightboxEl.style.opacity = '0';
   lightboxEl.style.pointerEvents = 'none';
-  lightboxImg.style.transform = 'scale(0.95)';
+  
+  const lightboxImg = document.getElementById('lib-lightbox-img');
+  const lightboxVid = document.getElementById('lib-lightbox-video');
+  
+  if (lightboxImg) {
+    lightboxImg.style.transform = 'scale(0.95)';
+  }
+  if (lightboxVid) {
+    lightboxVid.style.transform = 'scale(0.95)';
+    lightboxVid.pause();
+  }
+  
   setTimeout(() => {
     lightboxEl.style.display = 'none';
-    lightboxImg.src = '';
+    if (lightboxImg) lightboxImg.src = '';
+    if (lightboxVid) lightboxVid.src = '';
   }, 300);
 }
 
@@ -3453,6 +3512,7 @@ async function saveEdit() {
     images: libEditingItem.images || [],
     thumbnails: libEditingItem.thumbnails || [],
     isReferenceType: libEditingItem.isReferenceType || false,
+    isVideoType: libEditingItem.isVideoType || false,
     author: authorToSave,
     program: newProgram
   };
@@ -3677,7 +3737,7 @@ if (typeModalClose) {
   });
 }
 
-function initNewPrompt(isReferenceType) {
+function initNewPrompt(isReferenceType, isVideoType) {
   typeModal.classList.add('hidden');
   typeModal.setAttribute('aria-hidden', 'true');
 
@@ -3691,7 +3751,8 @@ function initNewPrompt(isReferenceType) {
     prompt: '',
     images: [],
     thumbnails: [],
-    isReferenceType: isReferenceType
+    isReferenceType: !!isReferenceType,
+    isVideoType: !!isVideoType
   };
   openLibModal(newItem);
   enterEditMode();
@@ -3699,12 +3760,18 @@ function initNewPrompt(isReferenceType) {
 
 if (btnTypeBeforeAfter) {
   btnTypeBeforeAfter.addEventListener('click', function() {
-    initNewPrompt(false);
+    initNewPrompt(false, false);
   });
 }
 if (btnTypeReference) {
   btnTypeReference.addEventListener('click', function() {
-    initNewPrompt(true);
+    initNewPrompt(true, false);
+  });
+}
+const btnTypeVideo = document.getElementById('btn-type-video');
+if (btnTypeVideo) {
+  btnTypeVideo.addEventListener('click', function() {
+    initNewPrompt(false, true);
   });
 }
 
@@ -3810,24 +3877,57 @@ function setupUploadSlot(slot, input, imageIndex) {
 
 async function handleSlotImageUpload(file, slot, imageIndex) {
   try {
+    const isVideo = file.type.startsWith('video/');
+    const isGif = file.type === 'image/gif';
+
+    if ((isVideo || isGif) && file.size > 950 * 1024) {
+      showToast('파일 용량이 너무 큽니다. 950KB 이하의 파일만 업로드할 수 있습니다.');
+      return;
+    }
+
     const dataUrl = await readFileAsDataUrl(file);
 
     if (!libEditingItem.images) libEditingItem.images = [];
     if (!libEditingItem.originalImages) libEditingItem.originalImages = [];
 
-    // Compress both images to 800px width with 0.7 quality to guarantee they fit within Firestore 1MB limits
-    const displayImage = await compressImage(dataUrl, 800, 0.7);
+    let finalData = dataUrl;
+    if (!isVideo && !isGif) {
+      // Compress static image
+      finalData = await compressImage(dataUrl, 800, 0.7);
+    }
     
-    libEditingItem.images[imageIndex] = displayImage;
-    libEditingItem.originalImages[imageIndex] = displayImage; // Match compressed to prevent payload bloat
+    libEditingItem.images[imageIndex] = finalData;
+    libEditingItem.originalImages[imageIndex] = finalData;
 
     // Render inside the slot
     const preview = slot.querySelector('.lib-upload-preview');
     const placeholder = slot.querySelector('.lib-upload-placeholder');
     const deleteBtn = slot.querySelector('.lib-upload-delete');
 
-    preview.src = displayImage;
-    preview.classList.remove('hidden');
+    // Clear existing videos
+    const existingVideo = slot.querySelector('video');
+    if (existingVideo) existingVideo.remove();
+
+    if (isVideo) {
+      preview.classList.add('hidden');
+      const videoEl = document.createElement('video');
+      videoEl.src = finalData;
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'cover';
+      videoEl.style.zIndex = '1';
+      slot.appendChild(videoEl);
+    } else {
+      preview.src = finalData;
+      preview.classList.remove('hidden');
+    }
+
     deleteBtn.classList.remove('hidden');
     placeholder.classList.add('hidden');
 
@@ -3838,10 +3938,10 @@ async function handleSlotImageUpload(file, slot, imageIndex) {
       });
     }
     renderLibrary(); // Refresh cards in main view
-    showToast((imageIndex === 0 ? 'Before' : 'After') + ' 사진이 정상 등록되었습니다');
+    showToast((imageIndex === 0 ? '대표/커버' : '영상/결과') + ' 파일이 정상 등록되었습니다');
   } catch (e) {
-    console.warn('Failed to upload image into slot:', e);
-    showToast('이미지 업로드 실패');
+    console.warn('Failed to upload file into slot:', e);
+    showToast('업로드 실패');
   }
 }
 
@@ -3853,18 +3953,37 @@ setupUploadSlot(resultSlot, resultInput, 2);
 function updateUploadSlotsUI(item) {
   const images = item.images || [];
   const isRef = !!item.isReferenceType;
+  const isVid = !!item.isVideoType;
+
+  // Clear existing slot video elements
+  [beforeSlot, afterSlot, resultSlot].forEach(slot => {
+    if (slot) {
+      const existingVideo = slot.querySelector('video');
+      if (existingVideo) existingVideo.remove();
+    }
+  });
 
   const labelBefore = document.getElementById('lib-upload-label-before');
   const labelAfter = document.getElementById('lib-upload-label-after');
 
-  if (isRef) {
+  if (isVid) {
+    resultSlot.classList.add('hidden');
+    if (labelBefore) labelBefore.textContent = '대표 이미지 (커버)';
+    if (labelAfter) labelAfter.textContent = '영상 / GIF';
+    beforeInput.accept = 'image/*';
+    afterInput.accept = 'image/*,video/*,image/gif';
+  } else if (isRef) {
     resultSlot.classList.remove('hidden');
     if (labelBefore) labelBefore.textContent = '1번 이미지 (원본)';
     if (labelAfter) labelAfter.textContent = '2번 이미지 (참조)';
+    beforeInput.accept = 'image/*';
+    afterInput.accept = 'image/*';
   } else {
     resultSlot.classList.add('hidden');
     if (labelBefore) labelBefore.textContent = 'Before';
     if (labelAfter) labelAfter.textContent = 'After';
+    beforeInput.accept = 'image/*';
+    afterInput.accept = 'image/*';
   }
   
   // Before Slot (index 0)
@@ -3873,8 +3992,25 @@ function updateUploadSlotsUI(item) {
   const beforeDelete = beforeSlot.querySelector('.lib-upload-delete');
   
   if (images[0]) {
-    beforePreview.src = images[0];
-    beforePreview.classList.remove('hidden');
+    if (images[0].startsWith('data:video/')) {
+      beforePreview.classList.add('hidden');
+      const videoEl = document.createElement('video');
+      videoEl.src = images[0];
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'cover';
+      videoEl.style.zIndex = '1';
+      beforeSlot.appendChild(videoEl);
+    } else {
+      beforePreview.src = images[0];
+      beforePreview.classList.remove('hidden');
+    }
     beforeDelete.classList.remove('hidden');
     beforePlaceholder.classList.add('hidden');
   } else {
@@ -3890,8 +4026,25 @@ function updateUploadSlotsUI(item) {
   const afterDelete = afterSlot.querySelector('.lib-upload-delete');
   
   if (images[1]) {
-    afterPreview.src = images[1];
-    afterPreview.classList.remove('hidden');
+    if (images[1].startsWith('data:video/')) {
+      afterPreview.classList.add('hidden');
+      const videoEl = document.createElement('video');
+      videoEl.src = images[1];
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'cover';
+      videoEl.style.zIndex = '1';
+      afterSlot.appendChild(videoEl);
+    } else {
+      afterPreview.src = images[1];
+      afterPreview.classList.remove('hidden');
+    }
     afterDelete.classList.remove('hidden');
     afterPlaceholder.classList.add('hidden');
   } else {
@@ -3907,8 +4060,25 @@ function updateUploadSlotsUI(item) {
   const resultDelete = resultSlot.querySelector('.lib-upload-delete');
   
   if (images[2]) {
-    resultPreview.src = images[2];
-    resultPreview.classList.remove('hidden');
+    if (images[2].startsWith('data:video/')) {
+      resultPreview.classList.add('hidden');
+      const videoEl = document.createElement('video');
+      videoEl.src = images[2];
+      videoEl.autoplay = true;
+      videoEl.loop = true;
+      videoEl.muted = true;
+      videoEl.playsInline = true;
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'cover';
+      videoEl.style.zIndex = '1';
+      resultSlot.appendChild(videoEl);
+    } else {
+      resultPreview.src = images[2];
+      resultPreview.classList.remove('hidden');
+    }
     resultDelete.classList.remove('hidden');
     resultPlaceholder.classList.add('hidden');
   } else {
